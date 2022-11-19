@@ -138,7 +138,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
                     var result = bodyLine;
                     if (totalTypes.Any(x => bodyLine.Contains(x)))
                     {
-                        result = "[bold black on yellow]" + bodyLine + "[/]";
+                        result = "[bold yellow]" + bodyLine + "[/]";
                     }
 
                     notesResult.AppendLine(result);
