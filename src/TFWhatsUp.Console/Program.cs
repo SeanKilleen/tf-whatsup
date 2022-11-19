@@ -13,7 +13,7 @@ using Sprache;
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
 
-public record ProviderInfo(string Vendor, string Name, string UrlToLatest, string Version);
+public record ProviderInfo(string Vendor, string Name, string UrlToLatest, string Version, string GitHubOrg, string GitHubRepo);
 
 internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 {
@@ -50,7 +50,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             var name = valueSplit[2];
             return new ProviderInfo(vendor, name,
                 $"https://registry.terraform.io/providers/{vendor}/{name}/latest",
-                x.Children.First(x => x.Name == "version").Value);
+                x.Children.First(x => x.Name == "version").Value, string.Empty, String.Empty);
         });
 
         var providerTable = new Table();
@@ -97,6 +97,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         using (var playwright = await Playwright.CreateAsync())
         {
             var browser = await playwright.Chromium.LaunchAsync();
+            List<ProviderInfo> providersWithGitHubInfo = new();
             foreach (var provider in providerInfo)
             {
                 var page = await browser.NewPageAsync();
@@ -105,7 +106,9 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
                 var githubLink = page.Locator(".github-source-link > a").First;
                 
                 var githubUrl = await githubLink.GetAttributeAsync("href");
+                var pathItems = new Uri(githubUrl, UriKind.Absolute).AbsolutePath.Split('/',StringSplitOptions.RemoveEmptyEntries);
 
+                providersWithGitHubInfo.Add(provider with { GitHubOrg = pathItems[0], GitHubRepo = pathItems[1] });
                 ghUrlTable.AddRow(provider.Name, githubUrl);
             }
         }
