@@ -96,23 +96,13 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             var browser = await playwright.Chromium.LaunchAsync();
             foreach (var provider in providerInfo)
             {
-                AnsiConsole.WriteLine("Getting new page");
                 var page = await browser.NewPageAsync();
-                AnsiConsole.WriteLine("Navigating to URL");
                 await page.GotoAsync(provider.urlToLatest);
                 AnsiConsole.WriteLine(page.Url);
-                AnsiConsole.WriteLine("Getting link via query selector");
                 var githubLink = page.Locator(".github-source-link > a").First;
-                if (githubLink is null)
-                {
-                    AnsiConsole.MarkupLine("[red]oh noooo[/]");
-                }
-                
-                AnsiConsole.WriteLine("Getting href");
                 
                 var githubUrl = await githubLink.GetAttributeAsync("href");
 
-                AnsiConsole.WriteLine("Adding to table");
                 ghUrlTable.AddRow(provider.providerName, githubUrl);
             }
         }
