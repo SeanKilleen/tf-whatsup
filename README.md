@@ -1,10 +1,14 @@
 # tf-whatsup
 
- Highlights Terraform provider release notes you should care about.
+Highlights Terraform provider release notes you should care about.
 
-Using this as an excuse to mess around with Playwright, Octokit, Spectre.Console, etc. Maybe it'll grow up to be a real thing someday.
+## Current Status
 
-The general gist:
+Using this as an excuse to mess around with Playwright, Octokit, Spectre.Console, etc.
+
+Maybe it'll grow up to be a real thing someday and make it a dotnet tool etc. etc. -- for now, it's just an unfinished mess of procedural code that I have yet to clean up, and I'm following no rules in this repository yet.
+
+## The Gist
 
 * Finds Terraform files
 * Uses `Octopus.CoreParsers.Hcl` to parse the file and pull the provider information
