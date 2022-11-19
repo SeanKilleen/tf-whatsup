@@ -127,10 +127,11 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
                 .Where(x => SemVersion.Parse(x.TagName,SemVersionStyles.Any).CompareSortOrderTo(releaseSemver) == 1)
                 .OrderBy(x=>SemVersion.Parse(x.TagName, SemVersionStyles.Any), SemVersion.SortOrderComparer);
             var latestReleasesTable = new Table();
-            latestReleasesTable.AddColumn($"Newer releases for {provider.Name}:");
+            latestReleasesTable.AddColumn($"Version number");
+            latestReleasesTable.AddColumn($"Release Notes");
             foreach (var thing in greaterSemverReleases)
             {
-                latestReleasesTable.AddRow(thing.TagName);
+                latestReleasesTable.AddRow(thing.TagName, thing.Body.EscapeMarkup());
             }
             
             AnsiConsole.Write(latestReleasesTable);
