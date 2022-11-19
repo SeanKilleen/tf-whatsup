@@ -102,7 +102,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             {
                 var page = await browser.NewPageAsync();
                 await page.GotoAsync(provider.UrlToLatest);
-                AnsiConsole.WriteLine(page.Url);
                 var githubLink = page.Locator(".github-source-link > a").First;
                 
                 var githubUrl = await githubLink.GetAttributeAsync("href");
