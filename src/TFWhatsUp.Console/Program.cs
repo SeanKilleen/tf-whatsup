@@ -12,6 +12,9 @@ using Sprache;
 
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
+
+public record ProviderInfo(string Vendor, string Name, string UrlToLatest, string Version);
+
 internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 {
     public sealed class Settings : CommandSettings
@@ -43,13 +46,11 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var providerInfo = providers.Select(x =>
         {
             var valueSplit = x.Value.Split('/');
-            return new
-            {
-                providerVendor = valueSplit[1],
-                providerName = valueSplit[2],
-                urlToLatest = $"https://registry.terraform.io/providers/{valueSplit[1]}/{valueSplit[2]}/latest",
-                providerVersion = x.Children.First(x => x.Name == "version").Value
-            };
+            var vendor = valueSplit[1];
+            var name = valueSplit[2];
+            return new ProviderInfo(vendor, name,
+                $"https://registry.terraform.io/providers/{vendor}/{name}/latest",
+                x.Children.First(x => x.Name == "version").Value);
         });
 
         var providerTable = new Table();
@@ -60,7 +61,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
         foreach (var provider in providerInfo)
         {
-            providerTable.AddRow(provider.providerVendor, provider.providerName, provider.providerVersion, $"[link]{provider.urlToLatest}[/]");
+            providerTable.AddRow(provider.Vendor, provider.Name, provider.Version, $"[link]{provider.UrlToLatest}[/]");
         }
         
         AnsiConsole.Write(providerTable);
@@ -99,13 +100,13 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             foreach (var provider in providerInfo)
             {
                 var page = await browser.NewPageAsync();
-                await page.GotoAsync(provider.urlToLatest);
+                await page.GotoAsync(provider.UrlToLatest);
                 AnsiConsole.WriteLine(page.Url);
                 var githubLink = page.Locator(".github-source-link > a").First;
                 
                 var githubUrl = await githubLink.GetAttributeAsync("href");
 
-                ghUrlTable.AddRow(provider.providerName, githubUrl);
+                ghUrlTable.AddRow(provider.Name, githubUrl);
             }
         }
         
