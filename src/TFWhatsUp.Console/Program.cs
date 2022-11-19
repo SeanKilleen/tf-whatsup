@@ -131,7 +131,20 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             latestReleasesTable.AddColumn($"Release Notes");
             foreach (var thing in greaterSemverReleases)
             {
-                latestReleasesTable.AddRow(thing.TagName, thing.Body.EscapeMarkup());
+                var bodySplit = thing.Body.EscapeMarkup().Split(new[]{'\n'},StringSplitOptions.None);
+                StringBuilder notesResult = new();
+                foreach (var bodyLine in bodySplit)
+                {
+                    var result = bodyLine;
+                    if (totalTypes.Any(x => bodyLine.Contains(x)))
+                    {
+                        result = "[bold black on yellow]" + bodyLine + "[/]";
+                    }
+
+                    notesResult.AppendLine(result);
+                }
+                
+                latestReleasesTable.AddRow(thing.TagName, notesResult.ToString());
             }
             
             AnsiConsole.Write(latestReleasesTable);
