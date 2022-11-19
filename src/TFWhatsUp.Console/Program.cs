@@ -94,10 +94,10 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var ghUrlTable = new Table();
         ghUrlTable.AddColumn("Provider");
         ghUrlTable.AddColumn("GitHub URL");
+        List<ProviderInfo> providersWithGitHubInfo = new();
         using (var playwright = await Playwright.CreateAsync())
         {
             var browser = await playwright.Chromium.LaunchAsync();
-            List<ProviderInfo> providersWithGitHubInfo = new();
             foreach (var provider in providerInfo)
             {
                 var page = await browser.NewPageAsync();
@@ -114,23 +114,29 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
         
         AnsiConsole.Write(ghUrlTable);
-        
-        // TODO: Parse GitHub Url into username & repo name
-        // TODO: Translate the hard-coded example below
 
-        var apiClient = new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
-        var matchingRelease = await apiClient.Repository.Release.Get("hashicorp", "terraform-provider-azurerm", "v3.16.0");
-        var releaseDate = matchingRelease.CreatedAt;
-        var releaseSemver = SemVersion.Parse(matchingRelease.TagName,SemVersionStyles.Any);
-
-        var allReleases = await apiClient.Repository.Release.GetAll("hashicorp", "terraform-provider-azurerm");
-        var releasesPublishedAfterOurs = allReleases.Where(x => x.CreatedAt > releaseDate);
-        var greaterSemverReleases = releasesPublishedAfterOurs.Where(x => SemVersion.Parse(x.TagName,SemVersionStyles.Any).CompareSortOrderTo(releaseSemver) == 1);
-
-        foreach (var thing in greaterSemverReleases)
+        foreach (var provider in providersWithGitHubInfo)
         {
-            AnsiConsole.WriteLine(thing.TagName);
+            var apiClient = new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
+            var matchingRelease = await apiClient.Repository.Release.Get(provider.GitHubOrg, provider.GitHubRepo, $"v{provider.Version}");
+            var releaseDate = matchingRelease.CreatedAt;
+            var releaseSemver = SemVersion.Parse(matchingRelease.TagName,SemVersionStyles.Any);
+
+            var allReleases = await apiClient.Repository.Release.GetAll(provider.GitHubOrg, provider.GitHubRepo);
+            var releasesPublishedAfterOurs = allReleases.Where(x => x.CreatedAt > releaseDate);
+            var greaterSemverReleases = releasesPublishedAfterOurs
+                .Where(x => SemVersion.Parse(x.TagName,SemVersionStyles.Any).CompareSortOrderTo(releaseSemver) == 1)
+                .OrderBy(x=>SemVersion.Parse(x.TagName, SemVersionStyles.Any), SemVersion.SortOrderComparer);
+            var latestReleasesTable = new Table();
+            latestReleasesTable.AddColumn($"Newer releases for {provider.Name}:");
+            foreach (var thing in greaterSemverReleases)
+            {
+                latestReleasesTable.AddRow(thing.TagName);
+            }
+            
+            AnsiConsole.Write(latestReleasesTable);
         }
+        
         return 0;
     }
 }
