@@ -7,12 +7,20 @@ using Octopus.CoreParsers.Hcl;
 using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Spectre.Console.Rendering;
 using Sprache;
 
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
 
 public record ProviderInfo(string Vendor, string Name, string UrlToLatest, string Version, string GitHubOrg, string GitHubRepo);
+
+public static class ExitCodes
+{
+    public const int UNKNOWN_ERROR = 1;
+    public const int LOCKFILE_NOT_FOUND = 2;
+    public const int TERRAFORM_FILES_NOT_FOUND = 3;
+}
 
 internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 {
@@ -23,13 +31,37 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         public string? TerraformFilesPath { get; init; }
     }
 
+    public class LockfileNotFoundException : Exception
+    {
+        public LockfileNotFoundException(string expectedLocation) : base($"Lock file not found at {expectedLocation}"){}
+    }
+    private string GetLockfileContents(string lockfilePath)
+    {
+        var lockfileExists = Path.Exists(lockfilePath);
+        if (!lockfileExists)
+        {
+            throw new LockfileNotFoundException(lockfilePath);
+        }
+
+        return File.ReadAllText(lockfilePath);
+
+    }
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         var StartDirectory = settings.TerraformFilesPath ?? Directory.GetCurrentDirectory();
-       
-        //TODO: Throw/exit if lockfile not found
-        //TODO: Throw/exit if no TF files found
         var lockfileLocation = Path.Combine(StartDirectory, ".terraform.lock.hcl");
+        string lockfileContents;
+        try
+        {
+            lockfileContents = GetLockfileContents(lockfileLocation);
+        }
+        catch (LockfileNotFoundException ex)
+        {
+            AnsiConsole.WriteException(ex);
+            return ExitCodes.LOCKFILE_NOT_FOUND;
+        }
+        
+        //TODO: Throw/exit if no TF files found
         var allTerraformFiles = Directory.GetFiles(StartDirectory, "*.tf", SearchOption.AllDirectories);
 
         var tfFilesTable = new Table();
@@ -40,54 +72,24 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
         AnsiConsole.Write(tfFilesTable);
     
-        var parsedThing = HclParser.HclTemplate.Parse(File.ReadAllText(lockfileLocation));
-        var providers = parsedThing.Children.Where(x => x.Name == "provider").ToList();
-        var providerInfo = providers.Select(x =>
-        {
-            var valueSplit = x.Value.Split('/');
-            var vendor = valueSplit[1];
-            var name = valueSplit[2];
-            return new ProviderInfo(vendor, name,
-                $"https://registry.terraform.io/providers/{vendor}/{name}/latest",
-                x.Children.First(x => x.Name == "version").Value, string.Empty, String.Empty);
-        });
-
-        var providerTable = new Table();
-        providerTable.AddColumn("Vendor");
-        providerTable.AddColumn("Provider");
-        providerTable.AddColumn("Version");
-        providerTable.AddColumn("Registry Link");
-
-        foreach (var provider in providerInfo)
-        {
-            providerTable.AddRow(provider.Vendor, provider.Name, provider.Version, $"[link]{provider.UrlToLatest}[/]");
-        }
+        var parsedLockFile = HclParser.HclTemplate.Parse(lockfileContents);
         
+        var providerInfoList = ExtractProviderInfoFromParsedLockFile(parsedLockFile);
+
+        var providerTable = GenerateProviderTable(providerInfoList);
         AnsiConsole.Write(providerTable);
         
         AnsiConsole.WriteLine("Concatenating TF files");
-        var sb = new StringBuilder();
-        foreach (var tfFile in allTerraformFiles)
-        {
-            sb.Append(File.ReadAllText(tfFile));
-        }
+        var concatenatedTerraformFiles = ConcatenateTfFiles(allTerraformFiles);
         
-        var parsedBigThing = HclParser.HclTemplate.Parse(sb.ToString());
+        var parsedTerraformFiles = HclParser.HclTemplate.Parse(concatenatedTerraformFiles);
 
-        var allResources = parsedBigThing.Children.Where(x => x.Name == "resource");
-        var allData = parsedBigThing.Children.Where(x => x.Name == "data");
+        var uniqueResourceNames = ExtractResourceTypesFromParsedTerraformFile(parsedTerraformFiles);
+        var uniqueDataNames = ExtractDataTypesFromParsedTerraformFile(parsedTerraformFiles);
+        var totalTypes = uniqueResourceNames.Union(uniqueDataNames).Order();
 
-        var resourceTypes = new HashSet<string>(allResources.Select(x => x.Value));
-        var dataTypes = new HashSet<string>(allData.Select(x => x.Value));
-        var totalTypes = resourceTypes.Union(dataTypes).Order();
-
-        var table = new Table();
-        table.AddColumn($"{totalTypes.Count()} Resource Types Found:");
-        foreach (var thing in totalTypes)
-        {
-            table.AddRow(thing);
-        }
-        AnsiConsole.Write(table);
+        var resourceTypesTable = GenerateResourceTypesTable(totalTypes);
+        AnsiConsole.Write(resourceTypesTable);
         
         AnsiConsole.WriteLine("Determining GitHub URLs");
         var ghUrlTable = new Table();
@@ -97,7 +99,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         using (var playwright = await Playwright.CreateAsync())
         {
             var browser = await playwright.Chromium.LaunchAsync();
-            foreach (var provider in providerInfo)
+            foreach (var provider in providerInfoList)
             {
                 var page = await browser.NewPageAsync();
                 await page.GotoAsync(provider.UrlToLatest);
@@ -150,5 +152,75 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
         
         return 0;
+    }
+
+    private Table GenerateResourceTypesTable(IOrderedEnumerable<string> totalTypes)
+    {
+        var table = new Table();
+        table.AddColumn($"{totalTypes.Count()} Resource Types Found:");
+        foreach (var thing in totalTypes)
+        {
+            table.AddRow(thing);
+        }
+
+        return table;
+    }
+
+    private HashSet<string> ExtractDataTypesFromParsedTerraformFile(HclElement parsedTerraformFiles)
+    {
+        var allData = parsedTerraformFiles.Children.Where(x => x.Name == "data");
+        var dataTypes = new HashSet<string>(allData.Select(x => x.Value));
+        return dataTypes;
+    }
+
+    private HashSet<string> ExtractResourceTypesFromParsedTerraformFile(HclElement parsedTerraformFiles)
+    {
+        var allResources = parsedTerraformFiles.Children.Where(x => x.Name == "resource");
+        var resourceTypes = new HashSet<string>(allResources.Select(x => x.Value));
+        
+        return resourceTypes;
+    }
+
+    private string ConcatenateTfFiles(string[] allTerraformFiles)
+    {
+        var sb = new StringBuilder();
+        foreach (var tfFile in allTerraformFiles)
+        {
+            sb.Append(File.ReadAllText(tfFile));
+        }
+
+        return sb.ToString();
+    }
+
+    private Table GenerateProviderTable(List<ProviderInfo> providerInfo)
+    {
+        
+        var providerTable = new Table();
+        providerTable.AddColumn("Vendor");
+        providerTable.AddColumn("Provider");
+        providerTable.AddColumn("Version");
+        providerTable.AddColumn("Registry Link");
+
+        foreach (var provider in providerInfo)
+        {
+            providerTable.AddRow(provider.Vendor, provider.Name, provider.Version, $"[link]{provider.UrlToLatest}[/]");
+        }
+
+        return providerTable;
+    }
+
+    private List<ProviderInfo> ExtractProviderInfoFromParsedLockFile(HclElement parsedThing)
+    {
+        var providers = parsedThing.Children.Where(x => x.Name == "provider").ToList();
+        var providerInfo = providers.Select(x =>
+        {
+            var valueSplit = x.Value.Split('/');
+            var vendor = valueSplit[1];
+            var name = valueSplit[2];
+            return new ProviderInfo(vendor, name,
+                $"https://registry.terraform.io/providers/{vendor}/{name}/latest",
+                x.Children.First(x => x.Name == "version").Value, string.Empty, String.Empty);
+        });
+        return providerInfo.ToList();
     }
 }
