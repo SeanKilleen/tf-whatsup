@@ -8,6 +8,7 @@ using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Sprache;
+using Emoji = Spectre.Console.Emoji;
 
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
@@ -106,6 +107,8 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         AnsiConsole.Write(ghUrlTable);
 
         var apiClient = CreateOctokitApiClient();
+        
+        // TODO: Split this into a function that returns the data, to hide behind a spinner. Then format the table as applicable once it's done.
         foreach (var provider in providersWithGitHubInfo)
         {
             var matchingRelease = await GetMatchingGitHubRelease(apiClient, provider.GitHubOrg, provider.GitHubRepo, provider.Version);
@@ -118,20 +121,27 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             var allReleases = await apiClient.Repository.Release.GetAll(provider.GitHubOrg, provider.GitHubRepo);
 
             var applicableReleases = GetApplicableReleases(matchingRelease, allReleases);
+
+            if (applicableReleases.Any())
+            {
+                var latestReleasesTable = GenerateReleaseNotesTable(provider.Name, applicableReleases, totalTypes.ToList());
             
-            var latestReleasesTable = GenerateReleaseNotesTable(applicableReleases, totalTypes.ToList());
-            
-            AnsiConsole.Write(latestReleasesTable);
+                AnsiConsole.Write(latestReleasesTable);
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[green]Provider '{provider.Name}' is up to date![/]");
+            }
         }
         
         return 0;
     }
 
-    private Table GenerateReleaseNotesTable(List<ReleaseInfoWithBody> applicableReleases, List<string> totalTypes)
+    private Table GenerateReleaseNotesTable(string providerName, List<ReleaseInfoWithBody> applicableReleases, List<string> totalTypes)
     {
         var latestReleasesTable = new Table();
-        latestReleasesTable.AddColumn($"Version number");
-        latestReleasesTable.AddColumn($"Release Notes");
+        latestReleasesTable.AddColumn($"{providerName} Version number");
+        latestReleasesTable.AddColumn("Release Notes");
         foreach (var release in applicableReleases)
         {
             var highlightedBody = ProcessBodyForHighlights(release.Body, totalTypes);
