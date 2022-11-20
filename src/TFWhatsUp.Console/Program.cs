@@ -7,6 +7,7 @@ using Octopus.CoreParsers.Hcl;
 using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Spectre.Console.Rendering;
 using Sprache;
 
 var app = new CommandApp<WhatsUpCommand>();
@@ -56,9 +57,8 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var StartDirectory = settings.TerraformFilesPath ?? Directory.GetCurrentDirectory();
         
         // TODO: Wrap API calls in methods that detect API rate limits and write messages that suggest using a token
-        var apiClient = CreateOctokitApiClient(settings.GitHubApiToken);
+        var apiClient = CreateOctokitApiClient(settings.GitHubApiToken ?? string.Empty);
 
-        
         var lockfileLocation = Path.Combine(StartDirectory, ".terraform.lock.hcl");
         string lockfileContents;
         try
@@ -74,14 +74,20 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         //TODO: Throw/exit if no TF files found
         var allTerraformFiles = Directory.GetFiles(StartDirectory, "*.tf", SearchOption.AllDirectories);
 
-        var tfFilesTable = new Table();
-        tfFilesTable.AddColumn($"{allTerraformFiles.Length} Terraform Files Found:");
-        foreach (var tfFile in allTerraformFiles)
-        {
-            tfFilesTable.AddRow(tfFile);
-        }
+        var tfFilesTable = GenerateTFFilesTable(allTerraformFiles);
         AnsiConsole.Write(tfFilesTable);
-    
+
+        AnsiConsole.Status()
+            .Spinner(Spinner.Known.Pong)
+            .Start("Adding Playwright Chromium Browser (which we need to determine GitHub URLs for providers)...", ctx =>
+            {
+                var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+                if (exitCode != 0)
+                {
+                    throw new Exception($"Unable to install Chromium browser for Playwright. Their tooling provided exit code {exitCode}. Exiting.");
+                }
+            });
+        
         var parsedLockFile = HclParser.HclTemplate.Parse(lockfileContents);
         
         var providerInfoList = ExtractProviderInfoFromParsedLockFile(parsedLockFile);
@@ -141,6 +147,18 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
         
         return 0;
+    }
+
+    private Table GenerateTFFilesTable(string[] allTerraformFiles)
+    {
+        var tfFilesTable = new Table();
+        tfFilesTable.AddColumn($"{allTerraformFiles.Length} Terraform Files Found:");
+        foreach (var tfFile in allTerraformFiles)
+        {
+            tfFilesTable.AddRow(tfFile);
+        }
+
+        return tfFilesTable;
     }
 
     private Table GenerateReleaseNotesTable(string providerName, List<ReleaseInfoWithBody> applicableReleases, List<string> totalTypes)
