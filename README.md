@@ -20,6 +20,6 @@ Maybe it'll grow up to be a real thing someday and make it a dotnet tool etc. et
 * Uses `Octokit` to find the release that matches yours
 * Pulls all releases
 * Filters them to those published after yours
-* Uses `Semver` to filter to the releases Semantically greater than yours
+* Uses `SemVersion` to filter to the releases Semantically greater than yours
 * Orders the release notes earliest to latest for a given provider
 * Prints the release notes line-by-line, highlighting the ones you might care about.
