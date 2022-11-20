@@ -36,22 +36,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         [CommandOption("-t|--github-api-token")]
         public string? GitHubApiToken { get; set; }
     }
-
-    public class LockfileNotFoundException : Exception
-    {
-        public LockfileNotFoundException(string expectedLocation) : base($"Lock file not found at {expectedLocation}"){}
-    }
-    private string GetLockfileContents(string lockfilePath)
-    {
-        var lockfileExists = Path.Exists(lockfilePath);
-        if (!lockfileExists)
-        {
-            throw new LockfileNotFoundException(lockfilePath);
-        }
-
-        return File.ReadAllText(lockfilePath);
-
-    }
+    
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         var StartDirectory = settings.TerraformFilesPath ?? Directory.GetCurrentDirectory();
@@ -60,21 +45,17 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var apiClient = CreateOctokitApiClient(settings.GitHubApiToken ?? string.Empty);
 
         var lockfileLocation = Path.Combine(StartDirectory, ".terraform.lock.hcl");
-        string lockfileContents;
-        try
+        if (!Path.Exists(lockfileLocation))
         {
-            lockfileContents = GetLockfileContents(lockfileLocation);
-        }
-        catch (LockfileNotFoundException ex)
-        {
-            AnsiConsole.WriteException(ex);
+            WriteError($"Lock file not found at {lockfileLocation}");
             return ExitCodes.LOCKFILE_NOT_FOUND;
         }
+        string lockfileContents = await File.ReadAllTextAsync(lockfileLocation);
         
         var allTerraformFiles = Directory.GetFiles(StartDirectory, "*.tf", SearchOption.AllDirectories);
         if (!allTerraformFiles.Any())
         {
-            AnsiConsole.WriteException(new Exception($"Exiting: No Terraform files found in '{StartDirectory}'"));
+            WriteError($"Exiting: No Terraform files found in '{StartDirectory}'");
             return ExitCodes.TERRAFORM_FILES_NOT_FOUND;
         }
 
@@ -130,7 +111,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             var matchingRelease = await GetMatchingGitHubRelease(apiClient, provider.GitHubOrg, provider.GitHubRepo, provider.Version);
             if (matchingRelease is null)
             {
-                AnsiConsole.WriteException(new Exception("Could not find/parse a matching release"));
+                WriteWarning($"Could not find/parse a matching release for {provider.Name} - {provider.Version}. Skipping it.");
                 continue;
             }
 
@@ -151,6 +132,16 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
         
         return 0;
+    }
+
+    private void WriteWarning(string message)
+    {
+        AnsiConsole.MarkupLine($"[bold yellow]WARNING:[/] {message}");
+    }
+
+    private void WriteError(string message)
+    {
+        AnsiConsole.MarkupLine($"[bold red]ERROR[/]: {message}");
     }
 
     private Table GenerateTFFilesTable(string[] allTerraformFiles)
@@ -241,7 +232,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var releaseSemver = SemVersion.Parse(matchingRelease.TagName,SemVersionStyles.Any);
         if (releaseSemver is null)
         {
-            AnsiConsole.WriteException(new Exception($"Could not determine Semantic Version from release '{providerVersion}'"));
+            WriteWarning($"Could not determine Semantic Version for provider '{providerGitHubOrg}/{providerVersion}' release '{providerVersion}'");
             return null;
         }
 
