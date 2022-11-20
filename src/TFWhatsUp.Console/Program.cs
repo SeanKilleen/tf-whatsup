@@ -8,7 +8,6 @@ using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Sprache;
-using Emoji = Spectre.Console.Emoji;
 
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
@@ -32,6 +31,9 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         [Description("Path where your Terraform is located. Defaults to current directory.")]
         [CommandArgument(0, "[tfFilesPath]")]
         public string? TerraformFilesPath { get; init; }
+        
+        [CommandOption("-t|--github-api-token")]
+        public string? GitHubApiToken { get; set; }
     }
 
     public class LockfileNotFoundException : Exception
@@ -52,6 +54,11 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         var StartDirectory = settings.TerraformFilesPath ?? Directory.GetCurrentDirectory();
+        
+        // TODO: Wrap API calls in methods that detect API rate limits and write messages that suggest using a token
+        var apiClient = CreateOctokitApiClient(settings.GitHubApiToken);
+
+        
         var lockfileLocation = Path.Combine(StartDirectory, ".terraform.lock.hcl");
         string lockfileContents;
         try
@@ -106,7 +113,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var ghUrlTable = GenerateGitHubUrlTable(providersWithGitHubInfo);
         AnsiConsole.Write(ghUrlTable);
 
-        var apiClient = CreateOctokitApiClient();
         
         // TODO: Split this into a function that returns the data, to hide behind a spinner. Then format the table as applicable once it's done.
         foreach (var provider in providersWithGitHubInfo)
@@ -220,9 +226,17 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return new ReleaseInfo(providerGitHubOrg, providerGitHubRepo, releaseSemver, releaseDate);
     }
 
-    private GitHubClient CreateOctokitApiClient()
+    private GitHubClient CreateOctokitApiClient(string token)
     {
-        return new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
+        var client = new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
+        
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            AnsiConsole.WriteLine("Using provided GitHub client token.");
+            client.Credentials = new Credentials(token);
+        }
+
+        return client;
     }
 
     private Table GenerateGitHubUrlTable(List<ProviderInfo> providersWithGitHubInfo)
