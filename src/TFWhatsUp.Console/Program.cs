@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using HtmlAgilityPack;
 using Microsoft.Playwright;
 using Octokit;
 using Octopus.CoreParsers.Hcl;
