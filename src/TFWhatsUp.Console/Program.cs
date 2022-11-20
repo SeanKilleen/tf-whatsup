@@ -7,7 +7,6 @@ using Octopus.CoreParsers.Hcl;
 using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Spectre.Console.Rendering;
 using Sprache;
 
 var app = new CommandApp<WhatsUpCommand>();
@@ -15,6 +14,9 @@ return app.Run(args);
 
 public record ProviderInfo(string Vendor, string Name, string UrlToLatest, string Version, string GitHubOrg, string GitHubRepo);
 
+public record ReleaseInfo(string OrgName, string RepoName, SemVersion Version, DateTimeOffset CreatedOn);
+
+public record ReleaseInfoWithBody(ReleaseInfo ReleaseInfo, string Body);
 public static class ExitCodes
 {
     public const int UNKNOWN_ERROR = 1;
@@ -86,7 +88,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
         var uniqueResourceNames = ExtractResourceTypesFromParsedTerraformFile(parsedTerraformFiles);
         var uniqueDataNames = ExtractDataTypesFromParsedTerraformFile(parsedTerraformFiles);
-        var totalTypes = uniqueResourceNames.Union(uniqueDataNames).Order();
+        var totalTypes = uniqueResourceNames.Union(uniqueDataNames).Order().ToList();
 
         var resourceTypesTable = GenerateResourceTypesTable(totalTypes);
         AnsiConsole.Write(resourceTypesTable);
@@ -103,43 +105,114 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var ghUrlTable = GenerateGitHubUrlTable(providersWithGitHubInfo);
         AnsiConsole.Write(ghUrlTable);
 
+        var apiClient = CreateOctokitApiClient();
         foreach (var provider in providersWithGitHubInfo)
         {
-            var apiClient = new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
-            var matchingRelease = await apiClient.Repository.Release.Get(provider.GitHubOrg, provider.GitHubRepo, $"v{provider.Version}");
-            var releaseDate = matchingRelease.CreatedAt;
-            var releaseSemver = SemVersion.Parse(matchingRelease.TagName,SemVersionStyles.Any);
+            var matchingRelease = await GetMatchingGitHubRelease(apiClient, provider.GitHubOrg, provider.GitHubRepo, provider.Version);
+            if (matchingRelease is null)
+            {
+                AnsiConsole.WriteException(new Exception("Could not find/parse a matching release"));
+                continue;
+            }
 
             var allReleases = await apiClient.Repository.Release.GetAll(provider.GitHubOrg, provider.GitHubRepo);
-            var releasesPublishedAfterOurs = allReleases.Where(x => x.CreatedAt > releaseDate);
-            var greaterSemverReleases = releasesPublishedAfterOurs
-                .Where(x => SemVersion.Parse(x.TagName,SemVersionStyles.Any).CompareSortOrderTo(releaseSemver) == 1)
-                .OrderBy(x=>SemVersion.Parse(x.TagName, SemVersionStyles.Any), SemVersion.SortOrderComparer);
-            var latestReleasesTable = new Table();
-            latestReleasesTable.AddColumn($"Version number");
-            latestReleasesTable.AddColumn($"Release Notes");
-            foreach (var thing in greaterSemverReleases)
-            {
-                var bodySplit = thing.Body.EscapeMarkup().Split(new[]{'\n'},StringSplitOptions.None);
-                StringBuilder notesResult = new();
-                foreach (var bodyLine in bodySplit)
-                {
-                    var result = bodyLine;
-                    if (totalTypes.Any(x => bodyLine.Contains(x)))
-                    {
-                        result = "[bold yellow]" + bodyLine + "[/]";
-                    }
 
-                    notesResult.AppendLine(result);
-                }
-                
-                latestReleasesTable.AddRow(thing.TagName, notesResult.ToString());
-            }
+            var applicableReleases = GetApplicableReleases(matchingRelease, allReleases);
+            
+            var latestReleasesTable = GenerateReleaseNotesTable(applicableReleases, totalTypes.ToList());
             
             AnsiConsole.Write(latestReleasesTable);
         }
         
         return 0;
+    }
+
+    private Table GenerateReleaseNotesTable(List<ReleaseInfoWithBody> applicableReleases, List<string> totalTypes)
+    {
+        var latestReleasesTable = new Table();
+        latestReleasesTable.AddColumn($"Version number");
+        latestReleasesTable.AddColumn($"Release Notes");
+        foreach (var release in applicableReleases)
+        {
+            var highlightedBody = ProcessBodyForHighlights(release.Body, totalTypes);
+                
+            latestReleasesTable.AddRow(release.ReleaseInfo.Version.ToString(), highlightedBody);
+        }
+
+        return latestReleasesTable;
+    }
+
+    private string ProcessBodyForHighlights(string releaseBody, List<string> totalTypes)
+    {
+        var bodySplit = releaseBody
+            .EscapeMarkup() // For Spectre.Console purposes
+            .Split(new[]{'\n'},StringSplitOptions.None);
+        StringBuilder notesResult = new();
+        foreach (var bodyLine in bodySplit)
+        {
+            var result = bodyLine;
+            if (totalTypes.Any(x => bodyLine.Contains(x)))
+            {
+                result = "[bold yellow]" + bodyLine + "[/]";
+            }
+
+            notesResult.AppendLine(result);
+        }
+
+        return notesResult.ToString();
+    }
+
+    private List<ReleaseInfoWithBody> GetApplicableReleases(ReleaseInfo matchingRelease, IReadOnlyList<Release> allReleases)
+    {
+        var releasesPublishedAfterTheMatchingRelease = allReleases.Where(x => x.CreatedAt > matchingRelease.CreatedOn);
+        
+        // TODO: Move to TryParse here rather than assuming they'll be parseable. If they're not, show a warning.
+        // TODO: Parse semver earlier so we're not repeating ourselves as much
+        var greaterSemverReleases = releasesPublishedAfterTheMatchingRelease
+            .Where(x => SemVersion.Parse(x.TagName, SemVersionStyles.Any).CompareSortOrderTo(matchingRelease.Version) ==
+                        1)
+            .OrderBy(x => SemVersion.Parse(x.TagName, SemVersionStyles.Any), SemVersion.SortOrderComparer)
+            .Select(x =>
+                new ReleaseInfoWithBody(
+                    new ReleaseInfo(
+                        matchingRelease.OrgName, 
+                        matchingRelease.RepoName,
+                        SemVersion.Parse(x.TagName, SemVersionStyles.Any), 
+                        x.CreatedAt)
+                    , x.Body));
+
+        return greaterSemverReleases.ToList();
+    }
+
+    private async Task<ReleaseInfo?> GetMatchingGitHubRelease(GitHubClient apiClient, string providerGitHubOrg, string providerGitHubRepo, string providerVersion)
+    {
+        // TODO: Fail gracefully if API client has an error
+        Release? matchingRelease;
+        try
+        {
+            matchingRelease = await apiClient.Repository.Release.Get(providerGitHubOrg, providerGitHubRepo, $"v{providerVersion}");
+        }
+        catch (ApiException ex)
+        {
+            AnsiConsole.WriteException(ex);
+            return null;
+        }
+        if (matchingRelease is null) { return null; }
+        
+        var releaseDate = matchingRelease.CreatedAt;
+        var releaseSemver = SemVersion.Parse(matchingRelease.TagName,SemVersionStyles.Any);
+        if (releaseSemver is null)
+        {
+            AnsiConsole.WriteException(new Exception($"Could not determine Semantic Version from release '{providerVersion}'"));
+            return null;
+        }
+
+        return new ReleaseInfo(providerGitHubOrg, providerGitHubRepo, releaseSemver, releaseDate);
+    }
+
+    private GitHubClient CreateOctokitApiClient()
+    {
+        return new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
     }
 
     private Table GenerateGitHubUrlTable(List<ProviderInfo> providersWithGitHubInfo)
@@ -158,6 +231,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
     private async Task<List<ProviderInfo>> GetGithubUrlsForProviders(List<ProviderInfo> providerInfoList)
     {
+        // TODO: If GitHub Url isn't found or isn't valid, show a warning here and don't add the provider to the final list. No sense in setting us up for failure later.
         List<ProviderInfo> providersWithGitHubInfo = new();
         using var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync();
@@ -175,7 +249,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return providersWithGitHubInfo;
     }
 
-    private Table GenerateResourceTypesTable(IOrderedEnumerable<string> totalTypes)
+    private Table GenerateResourceTypesTable(List<string> totalTypes)
     {
         var table = new Table();
         table.AddColumn($"{totalTypes.Count()} Resource Types Found:");
