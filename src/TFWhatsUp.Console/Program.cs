@@ -71,8 +71,12 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             return ExitCodes.LOCKFILE_NOT_FOUND;
         }
         
-        //TODO: Throw/exit if no TF files found
         var allTerraformFiles = Directory.GetFiles(StartDirectory, "*.tf", SearchOption.AllDirectories);
+        if (!allTerraformFiles.Any())
+        {
+            AnsiConsole.WriteException(new Exception($"Exiting: No Terraform files found in '{StartDirectory}'"));
+            return ExitCodes.TERRAFORM_FILES_NOT_FOUND;
+        }
 
         var tfFilesTable = GenerateTFFilesTable(allTerraformFiles);
         AnsiConsole.Write(tfFilesTable);
