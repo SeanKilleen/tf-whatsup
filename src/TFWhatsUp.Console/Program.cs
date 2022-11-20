@@ -90,29 +90,17 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
         var resourceTypesTable = GenerateResourceTypesTable(totalTypes);
         AnsiConsole.Write(resourceTypesTable);
-        
-        AnsiConsole.WriteLine("Determining GitHub URLs");
-        var ghUrlTable = new Table();
-        ghUrlTable.AddColumn("Provider");
-        ghUrlTable.AddColumn("GitHub URL");
-        List<ProviderInfo> providersWithGitHubInfo = new();
-        using (var playwright = await Playwright.CreateAsync())
-        {
-            var browser = await playwright.Chromium.LaunchAsync();
-            foreach (var provider in providerInfoList)
-            {
-                var page = await browser.NewPageAsync();
-                await page.GotoAsync(provider.UrlToLatest);
-                var githubLink = page.Locator(".github-source-link > a").First;
-                
-                var githubUrl = await githubLink.GetAttributeAsync("href");
-                var pathItems = new Uri(githubUrl, UriKind.Absolute).AbsolutePath.Split('/',StringSplitOptions.RemoveEmptyEntries);
 
-                providersWithGitHubInfo.Add(provider with { GitHubOrg = pathItems[0], GitHubRepo = pathItems[1] });
-                ghUrlTable.AddRow(provider.Name, githubUrl);
-            }
-        }
+        List<ProviderInfo> providersWithGitHubInfo = new();
         
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Earth)
+            .StartAsync("Determining GitHub URLs...", async ctx =>
+            {
+                providersWithGitHubInfo = await GetGithubUrlsForProviders(providerInfoList);
+            });
+
+        var ghUrlTable = GenerateGitHubUrlTable(providersWithGitHubInfo);
         AnsiConsole.Write(ghUrlTable);
 
         foreach (var provider in providersWithGitHubInfo)
@@ -152,6 +140,39 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
         
         return 0;
+    }
+
+    private Table GenerateGitHubUrlTable(List<ProviderInfo> providersWithGitHubInfo)
+    {
+        var ghUrlTable = new Table();
+        ghUrlTable.AddColumn("Provider");
+        ghUrlTable.AddColumn("GitHub Org");
+        ghUrlTable.AddColumn("GitHub Repo");
+        foreach (var provider in providersWithGitHubInfo)
+        {
+            ghUrlTable.AddRow(provider.Name, provider.GitHubOrg, provider.GitHubRepo);
+        }
+
+        return ghUrlTable;
+    }
+
+    private async Task<List<ProviderInfo>> GetGithubUrlsForProviders(List<ProviderInfo> providerInfoList)
+    {
+        List<ProviderInfo> providersWithGitHubInfo = new();
+        using var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Chromium.LaunchAsync();
+        foreach (var provider in providerInfoList)
+        {
+            var page = await browser.NewPageAsync();
+            await page.GotoAsync(provider.UrlToLatest);
+            var githubLink = page.Locator(".github-source-link > a").First;
+                
+            var githubUrl = await githubLink.GetAttributeAsync("href");
+            var pathItems = new Uri(githubUrl, UriKind.Absolute).AbsolutePath.Split('/',StringSplitOptions.RemoveEmptyEntries);
+
+            providersWithGitHubInfo.Add(provider with { GitHubOrg = pathItems[0], GitHubRepo = pathItems[1] });
+        }
+        return providersWithGitHubInfo;
     }
 
     private Table GenerateResourceTypesTable(IOrderedEnumerable<string> totalTypes)
