@@ -30,6 +30,7 @@ jobs:
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Output Anticipated Version Number
         run: dotnet minver -t v -v e -d preview
+        working-directory: "${{env.CODE_LOCATION}}"
       - name: Build
         run: dotnet build --no-restore
         working-directory: "${{env.CODE_LOCATION}}"
