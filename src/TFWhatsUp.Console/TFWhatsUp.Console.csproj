@@ -8,6 +8,12 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>whatsuptf</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/seankilleen/tf-whatsup</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>https://github.com/SeanKilleen/tf-whatsup/releases</PackageReleaseNotes>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <RollForward>major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,5 +28,7 @@
     <PackageReference Include="Spectre.Console" Version="0.45.0" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.45.0" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>
