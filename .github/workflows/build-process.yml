@@ -29,7 +29,9 @@ jobs:
         run: dotnet tool restore
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Output Anticipated Version Number
-        run: dotnet minver -t v -v e
+        run: |
+          VERSION=$(dotnet minver -t v -v e)
+          echo "$VERSION"
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Build
         run: dotnet build --no-restore
