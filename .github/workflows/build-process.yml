@@ -28,6 +28,8 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
         working-directory: "${{env.CODE_LOCATION}}"
+      - name: Output Anticipated Version Number
+        run: dotnet minver -t v -v e -d preview
       - name: Build
         run: dotnet build --no-restore
         working-directory: "${{env.CODE_LOCATION}}"
