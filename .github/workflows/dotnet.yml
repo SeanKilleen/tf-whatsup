@@ -9,7 +9,7 @@ on:
   pull_request:
     branches: ["main"]
 env:
-  CODE_LOCATION: .\src
+  CODE_LOCATION: src/
 jobs:
   build:
     runs-on: ubuntu-latest
