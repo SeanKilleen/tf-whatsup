@@ -9,6 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Playwright" Version="1.28.0" />
+    <PackageReference Include="minver" Version="4.2.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Octokit" Version="4.0.1" />
     <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.1.599" />
     <PackageReference Include="Semver" Version="2.2.0" />
