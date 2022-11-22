@@ -61,17 +61,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
         var tfFilesTable = GenerateTFFilesTable(allTerraformFiles);
         AnsiConsole.Write(tfFilesTable);
-
-        AnsiConsole.Status()
-            .Spinner(Spinner.Known.Pong)
-            .Start("Adding Playwright Chromium Browser (which we need to determine GitHub URLs for providers)...", ctx =>
-            {
-                var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
-                if (exitCode != 0)
-                {
-                    throw new Exception($"Unable to install Chromium browser for Playwright. Their tooling provided exit code {exitCode}. Exiting.");
-                }
-            });
         
         var parsedLockFile = HclParser.HclTemplate.Parse(lockfileContents);
         
