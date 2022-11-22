@@ -22,9 +22,9 @@ I sometimes look at Terraform projects with providers that haven't been updated 
 
 ## Current Status
 
-Using this as an excuse to mess around with Playwright, Octokit, Spectre.Console, etc.
+This is usable. I'll probably start putting it out there and seeing what I get. It still needs some tests of course but I'm able to use it in my daily work.
 
-Maybe it'll grow up to be a real thing someday and make it a dotnet tool etc. etc. -- for now, it's just an unfinished mess of procedural code that I have yet to clean up, and I'm following no rules in this repository yet.
+If it seems to work for folks for a while, I'll bump it to `v1.0.0`.
 
 ## The Gist
 
