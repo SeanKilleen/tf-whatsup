@@ -1,13 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Microsoft.Playwright;
 using Octokit;
 using Octopus.CoreParsers.Hcl;
 using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Spectre.Console.Rendering;
 using Sprache;
 using System.Net.Http.Json;
 using System.Text.Json;
