@@ -30,10 +30,8 @@ If it seems to work for folks for a while, I'll bump it to `v1.0.0`.
 
 * Finds Terraform files
 * Uses `Octopus.CoreParsers.Hcl` to parse the file and pull the provider information
-* Uses `Playwright` to hit the Provider URL in order to obtain the GitHub URL
+* Uses `HttpClient` to hit the Terraform Provider API URL in order to obtain the GitHub URL
 * Uses `Octokit` to find the release that matches yours
-* Pulls all releases
-* Filters them to those published after yours
-* Uses `SemVersion` to filter to the releases Semantically greater than yours
+* Pulls all releases & Filters them to those published after yours (both date-wise and based on Semver)
 * Orders the release notes earliest to latest for a given provider
 * Prints the release notes line-by-line, highlighting the ones you might care about.
