@@ -1,14 +1,14 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Microsoft.Playwright;
 using Octokit;
 using Octopus.CoreParsers.Hcl;
 using Semver;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Spectre.Console.Rendering;
 using Sprache;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
@@ -61,17 +61,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
         var tfFilesTable = GenerateTFFilesTable(allTerraformFiles);
         AnsiConsole.Write(tfFilesTable);
-
-        AnsiConsole.Status()
-            .Spinner(Spinner.Known.Pong)
-            .Start("Adding Playwright Chromium Browser (which we need to determine GitHub URLs for providers)...", ctx =>
-            {
-                var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
-                if (exitCode != 0)
-                {
-                    throw new Exception($"Unable to install Chromium browser for Playwright. Their tooling provided exit code {exitCode}. Exiting.");
-                }
-            });
         
         var parsedLockFile = HclParser.HclTemplate.Parse(lockfileContents);
         
@@ -270,18 +259,38 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
     {
         // TODO: If GitHub Url isn't found or isn't valid, show a warning here and don't add the provider to the final list. No sense in setting us up for failure later.
         List<ProviderInfo> providersWithGitHubInfo = new();
-        using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync();
+        using var httpClient = new HttpClient();
         foreach (var provider in providerInfoList)
         {
-            var page = await browser.NewPageAsync();
-            await page.GotoAsync(provider.UrlToLatest);
-            var githubLink = page.Locator(".github-source-link > a").First;
-                
-            var githubUrl = await githubLink.GetAttributeAsync("href");
-            var pathItems = new Uri(githubUrl, UriKind.Absolute).AbsolutePath.Split('/',StringSplitOptions.RemoveEmptyEntries);
-
-            providersWithGitHubInfo.Add(provider with { GitHubOrg = pathItems[0], GitHubRepo = pathItems[1] });
+            var url = $"https://registry.terraform.io/v1/providers/{provider.Vendor}/{provider.Name}";
+            try
+            {
+                var result =  await httpClient.GetFromJsonAsync<TerraformProviderResponse>(url);
+                if (result is not null)
+                {
+                    var pathItems = new Uri(result.Source, UriKind.Absolute).AbsolutePath.Split('/',StringSplitOptions.RemoveEmptyEntries);
+                    providersWithGitHubInfo.Add(provider with { GitHubOrg = pathItems[0], GitHubRepo = pathItems[1] });
+                }
+                else
+                {
+                    WriteWarning($"Terraform registry response was null for provider '{provider.Vendor}/{provider.Name}'");
+                }
+            }
+            catch (HttpRequestException ex) // Non success
+            {
+                WriteError($"HTTP error when querying Terraform registry for provider '{provider.Vendor}/{provider.Name}'");
+                AnsiConsole.WriteException(ex);
+            }
+            catch (NotSupportedException ex) // When content type is not valid
+            {
+                WriteError($"HTTP error when querying Terraform registry for provider '{provider.Vendor}/{provider.Name}'");
+                AnsiConsole.WriteException(ex);
+            }
+            catch (JsonException ex) // Invalid JSON
+            {
+                WriteError($"Invalid JSON Response when querying Terraform registry for provider '{provider.Vendor}/{provider.Name}'");
+                AnsiConsole.WriteException(ex);
+            }
         }
         return providersWithGitHubInfo;
     }
@@ -355,4 +364,19 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         });
         return providerInfo.ToList();
     }
+}
+
+public class TerraformProviderResponse
+{
+    public string Id { get; set; } = null!;
+    public string Owner { get; set; } = null!;
+    public string Name { get; set; } = null!;
+    public string Alias { get; set; } = null!;
+    public string Version { get; set; } = null!;
+    public string Tag { get; set; } = null!;
+    public string Description { get; set; } = null!;
+    public string Source { get; set; } = null!;
+    public string PublishedAt { get; set; } = null!;
+    public long Downloads { get; set; }
+    public string Tier { get; set; } = null!;
 }
