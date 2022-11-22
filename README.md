@@ -8,7 +8,7 @@ Highlights Terraform provider release notes you should care about.
 
 ```cmd
 USAGE:
-    TFWhatsUp.Console.dll [tfFilesPath] [OPTIONS]
+    whatsuptf [tfFilesPath] [OPTIONS]
 
 ARGUMENTS:
     [tfFilesPath]    Path where your Terraform is located. Defaults to current directory
