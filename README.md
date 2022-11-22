@@ -2,6 +2,8 @@
 
 Highlights Terraform provider release notes you should care about.
 
+[![ASCII console animation of the tool in action](https://asciinema.org/a/mUou4fBy6cN3SuRTXmfcaAhev.svg)](https://asciinema.org/a/mUou4fBy6cN3SuRTXmfcaAhev)
+
 ## Usage
 
 ```cmd
