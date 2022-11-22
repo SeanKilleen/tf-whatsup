@@ -2,6 +2,20 @@
 
 Highlights Terraform provider release notes you should care about.
 
+## Usage
+
+```cmd
+USAGE:
+    TFWhatsUp.Console.dll [tfFilesPath] [OPTIONS]
+
+ARGUMENTS:
+    [tfFilesPath]    Path where your Terraform is located. Defaults to current directory
+
+OPTIONS:
+    -h, --help                Prints help information
+    -t, --github-api-token
+```
+
 ## The Use Case
 
 I sometimes look at Terraform projects with providers that haven't been updated in a bit, especially because it's a good practice to peg a provider at a specific version. I want to upgrade them incrementally or perhaps in a large chunk, but it's not immediately clear which of the many, lovely, detailed Terraform notes across providers will actually apply to me (this is especially true in projects I'm parachuting into). This tool takes care of a lot of that work and helps me find the signal in the noise.
