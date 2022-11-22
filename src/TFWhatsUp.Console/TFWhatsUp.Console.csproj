@@ -19,6 +19,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerVerbosity>detailed</MinVerVerbosity>
   </PropertyGroup>
 
   <ItemGroup>
