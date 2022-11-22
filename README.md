@@ -13,7 +13,7 @@ ARGUMENTS:
 
 OPTIONS:
     -h, --help                Prints help information
-    -t, --github-api-token
+    -t, --github-api-token    A GitHub Personal Access Token. If you generate one and pass it, you won't hit the smaller rate-limits of un-authenticated accounts.
 ```
 
 ## The Use Case
