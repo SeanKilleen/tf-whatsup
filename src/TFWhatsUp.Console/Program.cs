@@ -36,6 +36,10 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         [Description("A GitHub Personal Access Token. If you generate one and pass it, you won't hit the smaller rate-limits of un-authenticated accounts.")]
         [CommandOption("-t|--github-api-token")]
         public string? GitHubApiToken { get; set; }
+
+        [Description("Typically we show one provider information at a time. This will show all of them without pause.")]
+        [CommandOption("-a|--all")]
+        public bool? ShowAllInfo { get; set; }
     }
 
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
@@ -108,6 +112,12 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
                 var latestReleasesTable = GenerateReleaseNotesTable(provider.Name, applicableReleases, totalTypes.ToList());
 
                 AnsiConsole.Write(latestReleasesTable);
+
+                if (settings.ShowAllInfo.HasValue && settings.ShowAllInfo.Value)
+                {
+                    continue;
+                }
+                
                 AnsiConsole.Confirm("Show next provider?");
             }
             else
