@@ -340,17 +340,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return resourceTypes;
     }
 
-    private string ConcatenateTfFiles(string[] allTerraformFiles)
-    {
-        var sb = new StringBuilder();
-        foreach (var tfFile in allTerraformFiles)
-        {
-            sb.Append(File.ReadAllText(tfFile));
-        }
-
-        return sb.ToString();
-    }
-
     private Table GenerateProviderTable(List<ProviderInfo> providerInfo)
     {
 
