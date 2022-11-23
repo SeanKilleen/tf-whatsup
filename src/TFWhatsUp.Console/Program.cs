@@ -126,6 +126,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             }
         }
 
+        AnsiConsole.MarkupLine($"[green]Finished successfully.[/]");
         return 0;
     }
 
