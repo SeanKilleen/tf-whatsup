@@ -108,6 +108,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
                 var latestReleasesTable = GenerateReleaseNotesTable(provider.Name, applicableReleases, totalTypes.ToList());
 
                 AnsiConsole.Write(latestReleasesTable);
+                AnsiConsole.Confirm("Show next provider?");
             }
             else
             {
