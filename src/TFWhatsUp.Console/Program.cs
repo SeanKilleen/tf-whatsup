@@ -71,13 +71,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         AnsiConsole.Write(providerTable);
 
         AnsiConsole.WriteLine("Concatenating TF files");
-        var concatenatedTerraformFiles = ConcatenateTfFiles(allTerraformFiles);
-
-        var parsedTerraformFiles = HclParser.HclTemplate.Parse(concatenatedTerraformFiles);
-
-        var uniqueResourceNames = ExtractResourceTypesFromParsedTerraformFile(parsedTerraformFiles);
-        var uniqueDataNames = ExtractDataTypesFromParsedTerraformFile(parsedTerraformFiles);
-        var totalTypes = uniqueResourceNames.Union(uniqueDataNames).Order().ToList();
+        var totalTypes = await ExtractResourcesFromFiles(allTerraformFiles); 
 
         var resourceTypesTable = GenerateResourceTypesTable(totalTypes);
         AnsiConsole.Write(resourceTypesTable);
@@ -122,6 +116,29 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         }
 
         return 0;
+    }
+
+    private async Task<List<string>> ExtractResourcesFromFiles(string[] allTerraformFiles)
+    {
+        List<string> allNames = new();
+        foreach (var filePath in allTerraformFiles)
+        {
+            try
+            {
+                var fileContents = await File.ReadAllTextAsync(filePath);
+                var parsedTerraformFile = HclParser.HclTemplate.Parse(fileContents);
+                allNames.AddRange(ExtractResourceTypesFromParsedTerraformFile(parsedTerraformFile));
+                allNames.AddRange(ExtractDataTypesFromParsedTerraformFile(parsedTerraformFile));
+            }
+            catch (Exception ex)
+            {
+                WriteError($"Encountered an issue processing ${filePath}");
+                AnsiConsole.WriteException(ex);
+                continue;
+            }
+        }
+
+        return allNames.Distinct().ToList();
     }
 
     private void WriteWarning(string message)
@@ -308,30 +325,19 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return table;
     }
 
-    private HashSet<string> ExtractDataTypesFromParsedTerraformFile(HclElement parsedTerraformFiles)
+    private List<string> ExtractDataTypesFromParsedTerraformFile(HclElement parsedTerraformFiles)
     {
         var allData = parsedTerraformFiles.Children.Where(x => x.Name == "data");
-        var dataTypes = new HashSet<string>(allData.Select(x => x.Value));
+        var dataTypes = new List<string>(allData.Select(x => x.Value));
         return dataTypes;
     }
 
-    private HashSet<string> ExtractResourceTypesFromParsedTerraformFile(HclElement parsedTerraformFiles)
+    private List<string> ExtractResourceTypesFromParsedTerraformFile(HclElement parsedTerraformFiles)
     {
         var allResources = parsedTerraformFiles.Children.Where(x => x.Name == "resource");
-        var resourceTypes = new HashSet<string>(allResources.Select(x => x.Value));
+        var resourceTypes = new List<string>(allResources.Select(x => x.Value));
 
         return resourceTypes;
-    }
-
-    private string ConcatenateTfFiles(string[] allTerraformFiles)
-    {
-        var sb = new StringBuilder();
-        foreach (var tfFile in allTerraformFiles)
-        {
-            sb.Append(File.ReadAllText(tfFile));
-        }
-
-        return sb.ToString();
     }
 
     private Table GenerateProviderTable(List<ProviderInfo> providerInfo)
