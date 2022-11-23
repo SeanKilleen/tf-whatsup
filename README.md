@@ -8,14 +8,15 @@ Highlights Terraform provider release notes you should care about.
 
 ```cmd
 USAGE:
-    whatsuptf [tfFilesPath] [OPTIONS]
+    TFWhatsUp.Console.dll [tfFilesPath] [OPTIONS]
 
 ARGUMENTS:
     [tfFilesPath]    Path where your Terraform is located. Defaults to current directory
 
 OPTIONS:
     -h, --help                Prints help information
-    -t, --github-api-token    A GitHub Personal Access Token. If you generate one and pass it, you won't hit the smaller rate-limits of un-authenticated accounts.
+    -t, --github-api-token    A GitHub Personal Access Token. If you generate one and pass it, you won't hit the smaller rate-limits of un-authenticated accounts
+    -a, --all                 Typically we show one provider information at a time. This will show all of them without pause
 ```
 
 ## The Use Case
