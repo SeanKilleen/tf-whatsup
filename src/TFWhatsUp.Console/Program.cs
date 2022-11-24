@@ -245,32 +245,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return greaterSemverReleases.ToList();
     }
 
-    private async Task<ReleaseInfo?> GetMatchingGitHubRelease(GitHubClient apiClient, string providerGitHubOrg, string providerGitHubRepo, string providerVersion)
-    {
-        // TODO: Fail gracefully if API client has an error
-        Release? matchingRelease;
-        try
-        {
-            matchingRelease = await apiClient.Repository.Release.Get(providerGitHubOrg, providerGitHubRepo, $"v{providerVersion}");
-        }
-        catch (ApiException ex)
-        {
-            AnsiConsole.WriteException(ex);
-            return null;
-        }
-        if (matchingRelease is null) { return null; }
-
-        var releaseDate = matchingRelease.CreatedAt;
-        var releaseSemver = SemVersion.Parse(matchingRelease.TagName, SemVersionStyles.Any);
-        if (releaseSemver is null)
-        {
-            WriteWarning($"Could not determine Semantic Version for provider '{providerGitHubOrg}/{providerVersion}' release '{providerVersion}'");
-            return null;
-        }
-
-        return new ReleaseInfo(providerGitHubOrg, providerGitHubRepo, releaseSemver, releaseDate);
-    }
-
     private GitHubClient CreateOctokitApiClient(string token)
     {
         var client = new GitHubClient(new ProductHeaderValue("TFWhatsUp"));
