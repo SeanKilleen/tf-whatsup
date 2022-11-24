@@ -113,7 +113,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         {
             var allReleases = await apiClient.Repository.Release.GetAll(provider.GitHubOrg, provider.GitHubRepo);
 
-            var applicableReleases = GetApplicableReleases(provider.GitHubOrg, provider.GitHubRepo, provider.Version, allReleases);
+            var applicableReleases = GetApplicableReleases(provider.Version, allReleases);
 
             if (applicableReleases.Any())
             {
@@ -225,7 +225,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return notesResult.ToString();
     }
 
-    private List<ReleaseInfoWithBody> GetApplicableReleases(string githubOrg, string gitHubRepo, string versionNumber, IReadOnlyList<Release> allReleases)
+    private List<ReleaseInfoWithBody> GetApplicableReleases(string versionNumber, IReadOnlyList<Release> allReleases)
     {
         // TODO: Move to TryParse here rather than assuming they'll be parseable. If they're not, show a warning.
         // TODO: Parse semver earlier so we're not repeating ourselves as much
