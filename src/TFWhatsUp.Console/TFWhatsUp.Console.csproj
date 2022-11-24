@@ -21,11 +21,6 @@
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <MinVerVerbosity>detailed</MinVerVerbosity>
   </PropertyGroup>
-  <PropertyGroup>
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <PublishReadyToRun>true</PublishReadyToRun>
-  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="minver" Version="4.2.0">
