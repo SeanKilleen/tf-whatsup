@@ -15,9 +15,20 @@ return app.Run(args);
 
 public record ProviderInfo(string Vendor, string Name, string UrlToLatest, string Version, string GitHubOrg, string GitHubRepo);
 
-public record ReleaseInfo(string OrgName, string RepoName, SemVersion Version, DateTimeOffset CreatedOn);
+public static class Extensions
+{
+    public static bool IsSemanticallyGreaterThan(this string currentVersionNumber, string versionToCompareTo)
+    {
+        return currentVersionNumber.ToSemVer().CompareSortOrderTo(versionToCompareTo.ToSemVer()) == 1;
+    }
 
-public record ReleaseInfoWithBody(ReleaseInfo ReleaseInfo, string Body);
+    public static SemVersion ToSemVer(this string versionNumber)
+    {
+        return SemVersion.Parse(versionNumber, SemVersionStyles.Any);
+    }
+}
+
+public record ReleaseInfoWithBody(SemVersion Version, string Body);
 public static class ExitCodes
 {
     public const int UNKNOWN_ERROR = 1;
@@ -100,16 +111,9 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         // TODO: Split this into a function that returns the data, to hide behind a spinner. Then format the table as applicable once it's done.
         foreach (var provider in providersWithGitHubInfo)
         {
-            var matchingRelease = await GetMatchingGitHubRelease(apiClient, provider.GitHubOrg, provider.GitHubRepo, provider.Version);
-            if (matchingRelease is null)
-            {
-                WriteWarning($"Could not find/parse a matching release for {provider.Name} - {provider.Version}. Skipping it.");
-                continue;
-            }
-
             var allReleases = await apiClient.Repository.Release.GetAll(provider.GitHubOrg, provider.GitHubRepo);
 
-            var applicableReleases = GetApplicableReleases(matchingRelease, allReleases);
+            var applicableReleases = GetApplicableReleases(provider.Version, allReleases);
 
             if (applicableReleases.Any())
             {
@@ -188,7 +192,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         {
             var highlightedBody = ProcessBodyForHighlights(release.Body, totalTypes, settings);
 
-            latestReleasesTable.AddRow(release.ReleaseInfo.Version.ToString(), highlightedBody);
+            latestReleasesTable.AddRow(release.Version.ToString(), highlightedBody);
         }
 
         return latestReleasesTable;
@@ -221,52 +225,17 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return notesResult.ToString();
     }
 
-    private List<ReleaseInfoWithBody> GetApplicableReleases(ReleaseInfo matchingRelease, IReadOnlyList<Release> allReleases)
+    private List<ReleaseInfoWithBody> GetApplicableReleases(string versionNumber, IReadOnlyList<Release> allReleases)
     {
-        var releasesPublishedAfterTheMatchingRelease = allReleases.Where(x => x.CreatedAt > matchingRelease.CreatedOn);
-
         // TODO: Move to TryParse here rather than assuming they'll be parseable. If they're not, show a warning.
         // TODO: Parse semver earlier so we're not repeating ourselves as much
-        var greaterSemverReleases = releasesPublishedAfterTheMatchingRelease
-            .Where(x => SemVersion.Parse(x.TagName, SemVersionStyles.Any).CompareSortOrderTo(matchingRelease.Version) ==
-                        1)
-            .OrderBy(x => SemVersion.Parse(x.TagName, SemVersionStyles.Any), SemVersion.SortOrderComparer)
+        var greaterSemverReleases = allReleases
+            .Where(x => x.TagName.IsSemanticallyGreaterThan(versionNumber))
+            .OrderBy(x => x.TagName.ToSemVer(), SemVersion.SortOrderComparer)
             .Select(x =>
-                new ReleaseInfoWithBody(
-                    new ReleaseInfo(
-                        matchingRelease.OrgName,
-                        matchingRelease.RepoName,
-                        SemVersion.Parse(x.TagName, SemVersionStyles.Any),
-                        x.CreatedAt)
-                    , x.Body));
+                new ReleaseInfoWithBody(x.TagName.ToSemVer(), x.Body));
 
         return greaterSemverReleases.ToList();
-    }
-
-    private async Task<ReleaseInfo?> GetMatchingGitHubRelease(GitHubClient apiClient, string providerGitHubOrg, string providerGitHubRepo, string providerVersion)
-    {
-        // TODO: Fail gracefully if API client has an error
-        Release? matchingRelease;
-        try
-        {
-            matchingRelease = await apiClient.Repository.Release.Get(providerGitHubOrg, providerGitHubRepo, $"v{providerVersion}");
-        }
-        catch (ApiException ex)
-        {
-            AnsiConsole.WriteException(ex);
-            return null;
-        }
-        if (matchingRelease is null) { return null; }
-
-        var releaseDate = matchingRelease.CreatedAt;
-        var releaseSemver = SemVersion.Parse(matchingRelease.TagName, SemVersionStyles.Any);
-        if (releaseSemver is null)
-        {
-            WriteWarning($"Could not determine Semantic Version for provider '{providerGitHubOrg}/{providerVersion}' release '{providerVersion}'");
-            return null;
-        }
-
-        return new ReleaseInfo(providerGitHubOrg, providerGitHubRepo, releaseSemver, releaseDate);
     }
 
     private GitHubClient CreateOctokitApiClient(string token)
