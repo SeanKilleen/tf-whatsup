@@ -40,6 +40,10 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         [Description("Typically we show one provider information at a time. This will show all of them without pause.")]
         [CommandOption("-a|--all")]
         public bool? ShowAllInfo { get; set; }
+
+        [Description("Instead of highlighting text, will show it in all caps with a '***' indicator at the start of a line.")]
+        [CommandOption("-c|--caps")]
+        public bool? AllCaps { get; set; }
     }
 
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
@@ -109,7 +113,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
             if (applicableReleases.Any())
             {
-                var latestReleasesTable = GenerateReleaseNotesTable(provider.Name, applicableReleases, totalTypes.ToList());
+                var latestReleasesTable = GenerateReleaseNotesTable(provider.Name, applicableReleases, totalTypes.ToList(), settings);
 
                 AnsiConsole.Write(latestReleasesTable);
 
@@ -175,14 +179,14 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return tfFilesTable;
     }
 
-    private Table GenerateReleaseNotesTable(string providerName, List<ReleaseInfoWithBody> applicableReleases, List<string> totalTypes)
+    private Table GenerateReleaseNotesTable(string providerName, List<ReleaseInfoWithBody> applicableReleases, List<string> totalTypes, Settings settings)
     {
         var latestReleasesTable = new Table();
         latestReleasesTable.AddColumn($"{providerName} Version number");
         latestReleasesTable.AddColumn("Release Notes");
         foreach (var release in applicableReleases)
         {
-            var highlightedBody = ProcessBodyForHighlights(release.Body, totalTypes);
+            var highlightedBody = ProcessBodyForHighlights(release.Body, totalTypes, settings);
 
             latestReleasesTable.AddRow(release.ReleaseInfo.Version.ToString(), highlightedBody);
         }
@@ -190,7 +194,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return latestReleasesTable;
     }
 
-    private string ProcessBodyForHighlights(string releaseBody, List<string> totalTypes)
+    private string ProcessBodyForHighlights(string releaseBody, List<string> totalTypes, Settings settings)
     {
         var bodySplit = releaseBody
             .EscapeMarkup() // For Spectre.Console purposes
@@ -201,7 +205,14 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             var result = bodyLine;
             if (totalTypes.Any(x => bodyLine.Contains(x)))
             {
-                result = "[bold yellow]" + bodyLine + "[/]";
+                if (settings.AllCaps.HasValue && settings.AllCaps.Value)
+                {
+                    result = "*** " + bodyLine.ToUpperInvariant();
+                }
+                else
+                {
+                    result = "[bold yellow]" + bodyLine + "[/]";
+                }
             }
 
             notesResult.AppendLine(result);

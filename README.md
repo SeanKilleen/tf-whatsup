@@ -8,6 +8,7 @@ Highlights Terraform provider release notes you should care about.
 
 ```cmd
 USAGE:
+USAGE:
     TFWhatsUp.Console.dll [tfFilesPath] [OPTIONS]
 
 ARGUMENTS:
@@ -17,6 +18,7 @@ OPTIONS:
     -h, --help                Prints help information
     -t, --github-api-token    A GitHub Personal Access Token. If you generate one and pass it, you won't hit the smaller rate-limits of un-authenticated accounts
     -a, --all                 Typically we show one provider information at a time. This will show all of them without pause
+    -c, --caps                Instead of highlighting text, will show it in all caps with a '***' indicator at the start of a line
 ```
 
 ## The Use Case
