@@ -59,3 +59,13 @@ jobs:
         if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
         run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
+      - name: Create GitHub Release With Assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          files: "**/*.nupkg"
