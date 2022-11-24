@@ -1,5 +1,7 @@
 # tf-whatsup
 
+[![Build Process](https://github.com/SeanKilleen/tf-whatsup/actions/workflows/build-process.yml/badge.svg)](https://github.com/SeanKilleen/tf-whatsup/actions/workflows/build-process.yml)
+
 Highlights Terraform provider release notes you should care about.
 
 [![ASCII console animation of the tool in action](https://asciinema.org/a/mUou4fBy6cN3SuRTXmfcaAhev.svg)](https://asciinema.org/a/mUou4fBy6cN3SuRTXmfcaAhev)
