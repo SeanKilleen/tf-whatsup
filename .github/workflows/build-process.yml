@@ -56,9 +56,9 @@ jobs:
       - name: ZIP Single-File .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          tar -cvf linux-x64.tar bin/Release/net7.0/linux-x64/publish
-          tar -cvf osx-x64.tar bin/Release/net7.0/osx-x64/publish
-          tar -cvf win-x64.tar bin/Release/net7.0/win-x64/publish
+          tar -cvf linux-x64.tar ./bin/Release/net7.0/linux-x64/publish
+          tar -cvf osx-x64.tar ./bin/Release/net7.0/osx-x64/publish
+          tar -cvf win-x64.tar ./bin/Release/net7.0/win-x64/publish
       - name: Publish Self-Contained .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
@@ -68,9 +68,9 @@ jobs:
       - name: ZIP Self-Contained .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          tar -cvf linux-x64_selfcontained.tar bin/Release/net7.0/linux-x64/publish
-          tar -cvf osx-x64_selfcontained.tar bin/Release/net7.0/osx-x64/publish
-          tar -cvf win-x64_selfcontained.tar bin/Release/net7.0/win-x64/publish
+          tar -cvf linux-x64_selfcontained.tar ./bin/Release/net7.0/linux-x64/publish
+          tar -cvf osx-x64_selfcontained.tar ./bin/Release/net7.0/osx-x64/publish
+          tar -cvf win-x64_selfcontained.tar ./bin/Release/net7.0/win-x64/publish
       - name: Pack
         run: dotnet pack -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
