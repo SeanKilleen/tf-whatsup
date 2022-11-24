@@ -55,9 +55,14 @@ jobs:
           dotnet publish -r win-x64 -c Release --sc false
       - name: ZIP Single-File .EXEs
         run: |
-          tar -cvf linux-x64.tar ${{env.CODE_LOCATION}}/TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
-          tar -cvf osx-x64.tar ${{env.CODE_LOCATION}}/TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
-          tar -cvf win-x64.tar ${{env.CODE_LOCATION}}/TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
+          tar -cvf linux-x64.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
+          tar -cvf osx-x64.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
+          tar -cvf win-x64.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
+      - name: Clear the publish directories
+        run: |
+          rm -r ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
+          rm -r ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
+          rm -r ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
       - name: Publish Self-Contained .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
@@ -66,9 +71,9 @@ jobs:
           dotnet publish -r win-x64 -c Release --sc true
       - name: ZIP Self-Contained .EXEs
         run: |
-          tar -cvf linux-x64_selfcontained.tar ${{env.CODE_LOCATION}}/TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
-          tar -cvf osx-x64_selfcontained.tar ${{env.CODE_LOCATION}}/TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
-          tar -cvf win-x64_selfcontained.tar ${{env.CODE_LOCATION}}/TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
+          tar -cvf linux-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
+          tar -cvf osx-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
+          tar -cvf win-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
       - name: Pack
         run: dotnet pack -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
