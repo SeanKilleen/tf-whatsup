@@ -11,7 +11,6 @@ Highlights Terraform provider release notes you should care about.
 
 ```cmd
 USAGE:
-USAGE:
     TFWhatsUp.Console.dll [tfFilesPath] [OPTIONS]
 
 ARGUMENTS:
