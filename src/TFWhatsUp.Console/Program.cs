@@ -40,6 +40,10 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         [Description("Typically we show one provider information at a time. This will show all of them without pause.")]
         [CommandOption("-a|--all")]
         public bool? ShowAllInfo { get; set; }
+
+        [Description("Instead of highlighting text, will show it in all caps with a '***' indicator at the start of a line.")]
+        [CommandOption("-c|--caps")]
+        public bool? AllCaps { get; set; }
     }
 
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
