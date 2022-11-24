@@ -48,17 +48,33 @@ jobs:
         run: dotnet test -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Publish Single-File .EXEs
+        if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
           dotnet publish -r linux-x64 -c Release --sc false
           dotnet publish -r osx-x64 -c Release --sc false
           dotnet publich -r win-x64 -c Release --sc false
       - name: ZIP Single-File .EXEs
+        if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          tar -cvf linux-x64.tar bin/Release/net7.0/linux-x64
-          tar -cvf osx-x64.tar bin/Release/net7.0/osx-x64
-          tar -cvf win-x64.tar bin/Release/net7.0/win-x64
+          tar -cvf linux-x64.tar bin/Release/net7.0/linux-x64/publish
+          tar -cvf osx-x64.tar bin/Release/net7.0/osx-x64/publish
+          tar -cvf win-x64.tar bin/Release/net7.0/win-x64/publish
+      - name: Publish Self-Contained .EXEs
+        if: github.ref == 'refs/heads/main'
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          dotnet publish -r linux-x64 -c Release --sc true
+          dotnet publish -r osx-x64 -c Release --sc true
+          dotnet publich -r win-x64 -c Release --sc true
+      - name: ZIP Self-Contained .EXEs
+        if: github.ref == 'refs/heads/main'
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          tar -cvf linux-x64_selfcontained.tar bin/Release/net7.0/linux-x64/publish
+          tar -cvf osx-x64_selfcontained.tar bin/Release/net7.0/osx-x64/publish
+          tar -cvf win-x64_selfcontained.tar bin/Release/net7.0/win-x64/publish
       - name: Pack
         run: dotnet pack -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
@@ -69,9 +85,9 @@ jobs:
           name: nuget-package
           path: |
             "**/*.nupkg"
-            "**/linux-x64.tar"
-            "**/osx-x64.tar"
-            "**/win-x64.tar"
+            "**/linux-x64*.tar"
+            "**/osx-x64*.tar"
+            "**/win-x64*.tar"
       - name: Publish Nuget
         if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
@@ -86,4 +102,6 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: true
           generate_release_notes: true
-          files: "**/*.nupkg"
+          files: |
+            "**/*.nupkg"
+            "**/*.tar"
