@@ -1,5 +1,8 @@
 # tf-whatsup
 
+_[![NuGet version](https://img.shields.io/nuget/v/TFWhatsUp.Console.svg?style=flat&label=nuget%3A%20TFWhatsUp.Console)](https://www.nuget.org/packages/TFWhatsUp.Console)_
+_[![Build Process](https://github.com/SeanKilleen/tf-whatsup/actions/workflows/build-process.yml/badge.svg)](https://github.com/SeanKilleen/tf-whatsup/actions/workflows/build-process.yml)_
+
 Highlights Terraform provider release notes you should care about.
 
 [![ASCII console animation of the tool in action](https://asciinema.org/a/mUou4fBy6cN3SuRTXmfcaAhev.svg)](https://asciinema.org/a/mUou4fBy6cN3SuRTXmfcaAhev)
@@ -7,7 +10,6 @@ Highlights Terraform provider release notes you should care about.
 ## Usage
 
 ```cmd
-USAGE:
 USAGE:
     TFWhatsUp.Console.dll [tfFilesPath] [OPTIONS]
 
