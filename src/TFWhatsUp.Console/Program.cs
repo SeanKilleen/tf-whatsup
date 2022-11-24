@@ -27,9 +27,8 @@ public static class Extensions
         return SemVersion.Parse(versionNumber, SemVersionStyles.Any);
     }
 }
-public record ReleaseInfo(string OrgName, string RepoName, SemVersion Version, DateTimeOffset CreatedOn);
 
-public record ReleaseInfoWithBody(ReleaseInfo ReleaseInfo, string Body);
+public record ReleaseInfoWithBody(SemVersion Version, string Body);
 public static class ExitCodes
 {
     public const int UNKNOWN_ERROR = 1;
@@ -193,7 +192,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         {
             var highlightedBody = ProcessBodyForHighlights(release.Body, totalTypes, settings);
 
-            latestReleasesTable.AddRow(release.ReleaseInfo.Version.ToString(), highlightedBody);
+            latestReleasesTable.AddRow(release.Version.ToString(), highlightedBody);
         }
 
         return latestReleasesTable;
@@ -234,13 +233,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             .Where(x => x.TagName.IsSemanticallyGreaterThan(versionNumber))
             .OrderBy(x => x.TagName.ToSemVer(), SemVersion.SortOrderComparer)
             .Select(x =>
-                new ReleaseInfoWithBody(
-                    new ReleaseInfo(
-                        githubOrg,
-                        gitHubRepo,
-                        x.TagName.ToSemVer(),
-                        x.CreatedAt)
-                    , x.Body));
+                new ReleaseInfoWithBody(x.TagName.ToSemVer(), x.Body));
 
         return greaterSemverReleases.ToList();
     }
