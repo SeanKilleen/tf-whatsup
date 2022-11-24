@@ -56,7 +56,7 @@ jobs:
         with:
           name: nuget-package
           path: "**/*.nupkg"
-      - name: Publish
+      - name: Publish Nuget
         if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
         run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
