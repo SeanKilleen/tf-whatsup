@@ -47,6 +47,18 @@ jobs:
       - name: Test
         run: dotnet test -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}"
+      - name: Publish Single-File .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          dotnet publish -r linux-x64 -c Release --sc false
+          dotnet publish -r osx-x64 -c Release --sc false
+          dotnet publich -r win-x64 -c Release --sc false
+      - name: ZIP Single-File .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          tar -cvf linux-x64.tar bin/Release/net7.0/linux-x64
+          tar -cvf osx-x64.tar bin/Release/net7.0/osx-x64
+          tar -cvf win-x64.tar bin/Release/net7.0/win-x64
       - name: Pack
         run: dotnet pack -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
@@ -55,7 +67,11 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: nuget-package
-          path: "**/*.nupkg"
+          path: |
+            "**/*.nupkg"
+            "**/linux-x64.tar"
+            "**/osx-x64.tar"
+            "**/win-x64.tar"
       - name: Publish Nuget
         if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
