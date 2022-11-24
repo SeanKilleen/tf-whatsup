@@ -39,6 +39,7 @@ jobs:
         run: |
           VERSION=$(dotnet minver -t v -v e)
           echo "$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Build
         run: dotnet build --no-restore
