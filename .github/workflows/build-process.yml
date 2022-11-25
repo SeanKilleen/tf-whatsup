@@ -36,17 +36,17 @@ jobs:
         run: dotnet tool restore
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Set Version Number
+        working-directory: "${{env.CODE_LOCATION}}"
         run: |
           VERSION=$(dotnet minver -t v -v e)
           echo "$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-        working-directory: "${{env.CODE_LOCATION}}"
       - name: Build
+        working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet build -c Release --no-restore
-        working-directory: "${{env.CODE_LOCATION}}"
       - name: Test
-        run: dotnet test -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}"
+        run: dotnet test -c Release --no-build --verbosity normal
       - name: Publish Single-File .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
@@ -75,8 +75,8 @@ jobs:
           tar -cvf osx-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
           tar -cvf win-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
       - name: Pack
-        run: dotnet pack -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
+        run: dotnet pack -c Release --no-build --verbosity normal
       - name: Save Artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
