@@ -11,7 +11,11 @@ on:
   workflow_dispatch:
 
 env:
-  CODE_LOCATION: src/
+  CODE_LOCATION: /home/runner/work/tf-whatsup/tf-whatsup/src/
+  CONSOLE_PROJECT_LOCATION: /home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/
+  RELEASE_LOCATION: /home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/bin/Release/net7.0/
+  PUBLISH_COMMAND_FLAGS: "-c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc false"
+  PUBLISH_COMMAND_FLAGS_SC: "-c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc true"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,48 +39,52 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
         working-directory: "${{env.CODE_LOCATION}}"
-      - name: Output Anticipated Version Number
+      - name: Set Version Number
+        working-directory: "${{env.CODE_LOCATION}}"
         run: |
           VERSION=$(dotnet minver -t v -v e)
           echo "$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-        working-directory: "${{env.CODE_LOCATION}}"
       - name: Build
+        working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet build -c Release --no-restore
-        working-directory: "${{env.CODE_LOCATION}}"
       - name: Test
-        run: dotnet test -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}"
+        run: dotnet test -c Release --no-build --verbosity normal
       - name: Publish Single-File .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc false
-          dotnet publish -r osx-x64 -c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc false
-          dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc false
+          dotnet publish -r linux-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
+          dotnet publish -r osx-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
+          dotnet publish -r win-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
       - name: ZIP Single-File .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          tar -cvf linux-x64.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
-          tar -cvf osx-x64.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
-          tar -cvf win-x64.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
+          tar -cvf linux-x64.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
+          tar -cvf osx-x64.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
+          tar -cvf win-x64.tar ${{env.RELEASE_LOCATION}}win-x64/publish
+          ls ./*.*
       - name: Clear the publish directories
         run: |
-          rm -r ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
-          rm -r ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
-          rm -r ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
+          rm -rf ${{env.RELEASE_LOCATION}}linux-x64/publish
+          rm -rf ${{env.RELEASE_LOCATION}}osx-x64/publish
+          rm -rf ${{env.RELEASE_LOCATION}}win-x64/publish
       - name: Publish Self-Contained .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc true
-          dotnet publish -r osx-x64 -c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc true
-          dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc true
+          dotnet publish -r linux-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
+          dotnet publish -r osx-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
+          dotnet publish -r win-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
       - name: ZIP Self-Contained .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          tar -cvf linux-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/linux-x64/publish
-          tar -cvf osx-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/osx-x64/publish
-          tar -cvf win-x64_selfcontained.tar ${{env.CODE_LOCATION}}TFWhatsUp.Console/bin/Release/net7.0/win-x64/publish
+          tar -cvf linux-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
+          tar -cvf osx-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
+          tar -cvf win-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}win-x64/publish
+          ls ./*.*
       - name: Pack
-        run: dotnet pack -c Release --no-build --verbosity normal
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
+        run: dotnet pack -c Release --no-build --verbosity normal
       - name: Save Artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
