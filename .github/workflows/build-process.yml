@@ -85,7 +85,7 @@ jobs:
       - name: Pack
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
         run: dotnet pack -c Release --no-build --verbosity normal
-      - name: Save Nuget Artifact
+      - name: Save Artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
