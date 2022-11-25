@@ -94,7 +94,7 @@ jobs:
         with:
           name: nuget-package
           path: |
-            "~/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
+            "~/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
       - name: Publish Nuget
         if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
@@ -110,4 +110,4 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: true
           files: |
-            "~/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
+            "~/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
