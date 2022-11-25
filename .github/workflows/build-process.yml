@@ -35,7 +35,7 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
         working-directory: "${{env.CODE_LOCATION}}"
-      - name: Output Anticipated Version Number
+      - name: Set Version Number
         run: |
           VERSION=$(dotnet minver -t v -v e)
           echo "$VERSION"
