@@ -63,6 +63,7 @@ jobs:
           tar -cvf linux-x64.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
           tar -cvf osx-x64.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
           tar -cvf win-x64.tar ${{env.RELEASE_LOCATION}}win-x64/publish
+          pwd
           ls ./*.*
       - name: Clear the publish directories
         run: |
@@ -81,6 +82,7 @@ jobs:
           tar -cvf linux-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
           tar -cvf osx-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
           tar -cvf win-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}win-x64/publish
+          pwd
           ls ./*.*
       - name: Pack
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
@@ -108,4 +110,4 @@ jobs:
           generate_release_notes: true
           files: |
             "${{env.CODE_LOCATION}}**/*.nupkg"
-            "${{env.CODE_LOCATION}}**/*.tar"
+            "${{env.CODE_LOCATION}}/*.tar"
