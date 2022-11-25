@@ -52,39 +52,39 @@ jobs:
       - name: Test
         working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet test -c Release --no-build --verbosity normal
-      # - name: Publish Single-File .EXEs
-      #   working-directory: "${{env.CODE_LOCATION}}"
-      #   run: |
-      #     dotnet publish -r linux-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
-      #     dotnet publish -r osx-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
-      #     dotnet publish -r win-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
-      # - name: ZIP Single-File .EXEs
-      #   working-directory: "${{env.CODE_LOCATION}}"
-      #   run: |
-      #     tar -cvf linux-x64.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
-      #     tar -cvf osx-x64.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
-      #     tar -cvf win-x64.tar ${{env.RELEASE_LOCATION}}win-x64/publish
-      #     pwd
-      #     ls ./*.*
-      # - name: Clear the publish directories
-      #   run: |
-      #     rm -rf ${{env.RELEASE_LOCATION}}linux-x64/publish
-      #     rm -rf ${{env.RELEASE_LOCATION}}osx-x64/publish
-      #     rm -rf ${{env.RELEASE_LOCATION}}win-x64/publish
-      # - name: Publish Self-Contained .EXEs
-      #   working-directory: "${{env.CODE_LOCATION}}"
-      #   run: |
-      #     dotnet publish -r linux-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
-      #     dotnet publish -r osx-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
-      #     dotnet publish -r win-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
-      # - name: ZIP Self-Contained .EXEs
-      #   working-directory: "${{env.CODE_LOCATION}}"
-      #   run: |
-      #     tar -cvf linux-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
-      #     tar -cvf osx-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
-      #     tar -cvf win-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}win-x64/publish
-      #     pwd
-      #     ls ./*.*
+      - name: Publish Single-File .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          dotnet publish -r linux-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
+          dotnet publish -r osx-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
+          dotnet publish -r win-x64 ${{env.PUBLISH_COMMAND_FLAGS}}
+      - name: ZIP Single-File .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          tar -cvf ./output/tfwhatsup_linux-x64.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
+          tar -cvf ./output/tfwhatsup_osx-x64.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
+          tar -cvf ./output/tfwhatsup_win-x64.tar ${{env.RELEASE_LOCATION}}win-x64/publish
+          pwd
+          ls ./*.*
+      - name: Clear the publish directories
+        run: |
+          rm -rf ${{env.RELEASE_LOCATION}}linux-x64/publish
+          rm -rf ${{env.RELEASE_LOCATION}}osx-x64/publish
+          rm -rf ${{env.RELEASE_LOCATION}}win-x64/publish
+      - name: Publish Self-Contained .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          dotnet publish -r linux-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
+          dotnet publish -r osx-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
+          dotnet publish -r win-x64 ${{env.PUBLISH_COMMAND_FLAGS_SC}}
+      - name: ZIP Self-Contained .EXEs
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          tar -cvf ./output/tfwhatsup_linux-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}linux-x64/publish
+          tar -cvf ./output/tfwhatsup_osx-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}osx-x64/publish
+          tar -cvf ./output/tfwhatsup_win-x64_selfcontained.tar ${{env.RELEASE_LOCATION}}win-x64/publish
+          pwd
+          ls ./*.*
       - name: Pack
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console"
         run: dotnet pack -c Release --no-build --verbosity normal
@@ -94,10 +94,14 @@ jobs:
         with:
           name: nuget-package
           path: "**/*.nupkg"
-      - name: Publish Nuget
+      - name: Go to Output Directory # To set up artifacts to work
+        run: cd ${{env.CODE_LOCATION}}output
+      - name: "Save Artifact: Tar files"
         if: github.ref == 'refs/heads/main'
-        working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
-        run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
+        uses: actions/upload-artifact@v3
+        with:
+          name: TAR-files
+          path: "**/*.tar"
       - name: Create GitHub Release With Assets
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
@@ -110,3 +114,7 @@ jobs:
           generate_release_notes: true
           # files: |
           #   "/home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/TFWhatsUp.Console.${{env.VERSION}}.nupkg"
+      - name: Publish Nuget
+        if: github.ref == 'refs/heads/main'
+        working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
+        run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
