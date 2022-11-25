@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
 
 env:
-  CODE_LOCATION: src/
-  CONSOLE_PROJECT_LOCATION: src/TFWhatsUp.Console/
-  RELEASE_LOCATION: src/TFWhatsUp.Console/bin/Release/net7.0/
+  CODE_LOCATION: /home/runner/work/tf-whatsup/tf-whatsup/src/
+  CONSOLE_PROJECT_LOCATION: /home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/
+  RELEASE_LOCATION: /home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/bin/Release/net7.0/
   PUBLISH_COMMAND_FLAGS: "-c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc false"
   PUBLISH_COMMAND_FLAGS_SC: "-c Release -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:PublishReadyToRunShowWarnings=true --sc true"
 jobs:
