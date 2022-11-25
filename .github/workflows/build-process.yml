@@ -45,6 +45,7 @@ jobs:
           VERSION=$(dotnet minver -t v -v e)
           echo "$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Home: $HOME"
       - name: Build
         working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet build -c Release --no-restore
@@ -93,7 +94,7 @@ jobs:
         with:
           name: nuget-package
           path: |
-            "/home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
+            "~/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
       - name: Publish Nuget
         if: github.ref == 'refs/heads/main'
         working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
@@ -109,4 +110,4 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: true
           files: |
-            "/home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
+            "~/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/*.nupkg"
