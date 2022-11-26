@@ -39,6 +39,7 @@ jobs:
           VERSION=$(dotnet minver -t v -v e)
           echo "$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Home: $HOME"
       - name: Build
         working-directory: "${{env.CODE_LOCATION}}"
