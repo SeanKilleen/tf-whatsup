@@ -41,7 +41,6 @@ jobs:
           echo "$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Home: $HOME"
       - name: Build
         working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet build -c Release --no-restore
