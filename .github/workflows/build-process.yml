@@ -106,18 +106,36 @@ jobs:
         with:
           name: tfwhatsup_win-x64
           path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_win-x64.tar.gz"
+      - name: "Save Artifact: tfwhatsup_win-x64_selfcontained"
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfwhatsup_win-x64_selfcontained
+          path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_win-x64_selfcontained.tar.gz"
       - name: "Save Artifact: tfwhatsup_linux-x64"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
           name: tfwhatsup_linux-x64
           path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_linux-x64.tar.gz"
+      - name: "Save Artifact: tfwhatsup_linux-x64_selfcontained"
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfwhatsup_linux-x64_selfcontained
+          path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_linux-x64_selfcontained.tar.gz"
       - name: "Save Artifact: tfwhatsup_osx-x64"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
           name: tfwhatsup_osx-x64
           path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_osx-x64.tar.gz"
+      - name: "Save Artifact: tfwhatsup_osx-x64_selfcontained"
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfwhatsup_osx-x64_selfcontained
+          path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_osx-x64_selfcontained.tar.gz"
       # - name: Create GitHub Release With Assets
       #   if: github.ref == 'refs/heads/main'
       #   uses: softprops/action-gh-release@v1
