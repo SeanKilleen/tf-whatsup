@@ -94,7 +94,7 @@ jobs:
       - name: Publish Single-File .EXE - ${{matrix.RID}}
         working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet publish -r ${{matrix.RID}} ${{env.PUBLISH_COMMAND_FLAGS}}
-      - name: ZIP Single-File .EXE - ${{matrix.RID}
+      - name: ZIP Single-File .EXE - ${{matrix.RID}}
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
           mkdir ${{env.CODE_LOCATION}}output
