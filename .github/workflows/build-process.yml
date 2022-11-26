@@ -111,20 +111,19 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
       - name: See download contents
-        run:
-          ls -R
-          # - name: Create GitHub Release With Assets
-        #   if: github.ref == 'refs/heads/main'
-        #   uses: softprops/action-gh-release@v1
-        #   id: create_release
-        #   with:
-        #     tag_name: "v${{env.VERSION}}"
-        #     draft: false
-        #     prerelease: false
-        #     fail_on_unmatched_files: true
-        #     generate_release_notes: true
-        #     # files: |
-        #     #   "/home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/TFWhatsUp.Console.${{env.VERSION}}.nupkg"
+        run: ls -R
+      - name: Create GitHub Release With Assets
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        with:
+          tag_name: "v${{env.VERSION}}"
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          files: |
+            "**/*.nupkg"
+            "**/*.tar.gz"
       - name: Publish Nuget
         working-directory: ""
         run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
