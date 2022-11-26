@@ -100,11 +100,21 @@ jobs:
         run: |
           cd ${{env.CODE_LOCATION}}output
           pwd
-      - name: "Save Artifact: Tar files"
+      - name: "Save Artifact: tfwhatsup_win-x64"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
-          path: "tfwhatsup_linux-x64.tar"
+          path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_win-x64.tar.gz"
+      - name: "Save Artifact: tfwhatsup_linux-x64"
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_linux-x64.tar.gz"
+      - name: "Save Artifact: tfwhatsup_osx-x64"
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          path: "/home/runner/work/tf-whatsup/tf-whatsup/src/output/tfwhatsup_osx-x64.tar.gz"
       # - name: Create GitHub Release With Assets
       #   if: github.ref == 'refs/heads/main'
       #   uses: softprops/action-gh-release@v1
