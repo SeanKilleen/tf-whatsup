@@ -60,22 +60,6 @@ jobs:
         with:
           name: nuget-package
           path: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg/*.nupkg"
-      # - name: Create GitHub Release With Assets
-      #   if: github.ref == 'refs/heads/main'
-      #   uses: softprops/action-gh-release@v1
-      #   id: create_release
-      #   with:
-      #     tag_name: "v${{env.VERSION}}"
-      #     draft: false
-      #     prerelease: false
-      #     fail_on_unmatched_files: true
-      #     generate_release_notes: true
-      #     # files: |
-      #     #   "/home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/TFWhatsUp.Console.${{env.VERSION}}.nupkg"
-      # - name: Publish Nuget
-      #   if: github.ref == 'refs/heads/main'
-      #   working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
-      #   run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
   publish_artifacts:
     runs-on: ubuntu-latest
     strategy:
@@ -110,3 +94,28 @@ jobs:
         with:
           name: tfwhatsup_${{matrix.RID}}_selfcontained
           path: "${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish/*.*"
+  create_release:
+    needs: [build, publish_artifacts]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      - name: See download contents
+        run: ls -R
+          # - name: Create GitHub Release With Assets
+        #   if: github.ref == 'refs/heads/main'
+        #   uses: softprops/action-gh-release@v1
+        #   id: create_release
+        #   with:
+        #     tag_name: "v${{env.VERSION}}"
+        #     draft: false
+        #     prerelease: false
+        #     fail_on_unmatched_files: true
+        #     generate_release_notes: true
+        #     # files: |
+        #     #   "/home/runner/work/tf-whatsup/tf-whatsup/src/TFWhatsUp.Console/nupkg/TFWhatsUp.Console.${{env.VERSION}}.nupkg"
+        # - name: Publish Nuget
+        #   if: github.ref == 'refs/heads/main'
+        #   working-directory: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg"
+        #   run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json'
