@@ -24,6 +24,9 @@ public static class Extensions
 
     public static SemVersion ToSemVer(this string versionNumber)
     {
+        // TODO: Move to TryParse here rather than assuming they'll be parseable. If they're not, show a warning.
+        // https://github.com/SeanKilleen/tf-whatsup/issues/46
+
         return SemVersion.Parse(versionNumber, SemVersionStyles.Any);
     }
 }
@@ -62,6 +65,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var StartDirectory = settings.TerraformFilesPath ?? Directory.GetCurrentDirectory();
 
         // TODO: Wrap API calls in methods that detect API rate limits and write messages that suggest using a token
+        // https://github.com/SeanKilleen/tf-whatsup/issues/44
         var apiClient = CreateOctokitApiClient(settings.GitHubApiToken ?? string.Empty);
 
         var lockfileLocation = Path.Combine(StartDirectory, ".terraform.lock.hcl");
@@ -90,7 +94,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         AnsiConsole.Write(providerTable);
 
         AnsiConsole.WriteLine("Concatenating TF files");
-        var totalTypes = await ExtractResourcesFromFiles(allTerraformFiles); 
+        var totalTypes = await ExtractResourcesFromFiles(allTerraformFiles);
 
         var resourceTypesTable = GenerateResourceTypesTable(totalTypes);
         AnsiConsole.Write(resourceTypesTable);
@@ -109,6 +113,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
 
         // TODO: Split this into a function that returns the data, to hide behind a spinner. Then format the table as applicable once it's done.
+        // https://github.com/SeanKilleen/tf-whatsup/issues/45
         foreach (var provider in providersWithGitHubInfo)
         {
             var allReleases = await apiClient.Repository.Release.GetAll(provider.GitHubOrg, provider.GitHubRepo);
@@ -125,7 +130,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
                 {
                     continue;
                 }
-                
+
                 AnsiConsole.Confirm("Show next provider?");
             }
             else
@@ -227,7 +232,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
     private List<ReleaseInfoWithBody> GetApplicableReleases(string versionNumber, IReadOnlyList<Release> allReleases)
     {
-        // TODO: Move to TryParse here rather than assuming they'll be parseable. If they're not, show a warning.
         // TODO: Parse semver earlier so we're not repeating ourselves as much
         var greaterSemverReleases = allReleases
             .Where(x => x.TagName.IsSemanticallyGreaterThan(versionNumber))
@@ -267,7 +271,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
 
     private async Task<List<ProviderInfo>> GetGithubUrlsForProviders(List<ProviderInfo> providerInfoList)
     {
-        // TODO: If GitHub Url isn't found or isn't valid, show a warning here and don't add the provider to the final list. No sense in setting us up for failure later.
         List<ProviderInfo> providersWithGitHubInfo = new();
         using var httpClient = new HttpClient();
         foreach (var provider in providerInfoList)
