@@ -34,6 +34,7 @@ jobs:
         run: dotnet tool restore
         working-directory: "${{env.CODE_LOCATION}}"
       - name: Set Version Number
+        id: set-version
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
           VERSION=$(dotnet minver -t v -v e)
