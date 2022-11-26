@@ -91,7 +91,7 @@ jobs:
       - name: ZIP Single-File .EXE - ${{matrix.RID}}_selfcontained
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
-          tar cvz -C ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish -f ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}_sefcontained.tar.gz .
+          tar cvz -C ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish -f ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}_sefcontained.tar.gz .
       - name: "Save Artifact: ${{matrix.RID}}_selfcontained"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
@@ -111,7 +111,8 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
       - name: See download contents
-        run: ls -R
+        run:
+          ls -R
           # - name: Create GitHub Release With Assets
         #   if: github.ref == 'refs/heads/main'
         #   uses: softprops/action-gh-release@v1
