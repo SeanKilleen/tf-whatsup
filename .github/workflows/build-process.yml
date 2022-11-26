@@ -102,12 +102,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: |
-            "tfwhatsup_linux-x64.tar"
-            "tfwhatsup_linux-x64_selfcontained.tar"
-            "tfwhatsup_osx-x64.tar"
-            "tfwhatsup_osx-x64_selfcontained.tar"
-            "tfwhatsup_win-x64.tar"
-            "tfwhatsup_win-x64_selfcontained.tar"
+            "**/tfwhatsup_linux-x64.tar"
+            "**/tfwhatsup_linux-x64_selfcontained.tar"
+            "**/tfwhatsup_osx-x64.tar"
+            "**/tfwhatsup_osx-x64_selfcontained.tar"
+            "**/tfwhatsup_win-x64.tar"
+            "**/tfwhatsup_win-x64_selfcontained.tar"
       - name: Create GitHub Release With Assets
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
