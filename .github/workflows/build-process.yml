@@ -117,7 +117,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "**/*.tar.gz,**/*.nupkg"
-          tag: "v${{env.VERSION}}"
+          tag: "v${{ steps.set-version.outputs.VERSION }}"
           artifactErrorsFailBuild: true
           allowUpdates: false
           draft: false
