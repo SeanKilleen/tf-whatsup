@@ -67,7 +67,7 @@ jobs:
           tar cvzf ${{env.CODE_LOCATION}}output/tfwhatsup_win-x64.tar.gz ${{env.RELEASE_LOCATION}}win-x64/publish/*.*
           pwd
           ls ./*.*
-          find ${{env.CODE_LOCATION}} -name tfwhatsup_win-x64.tar
+          find ${{env.CODE_LOCATION}} -name tfwhatsup_win-x64.tar.gz
       - name: Clear the publish directories
         run: |
           rm -rf ${{env.RELEASE_LOCATION}}linux-x64/publish
