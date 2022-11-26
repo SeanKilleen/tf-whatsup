@@ -67,6 +67,7 @@ jobs:
           tar -cvfz ./output/tfwhatsup_win-x64.tar ${{env.RELEASE_LOCATION}}win-x64/publish/
           pwd
           ls ./*.*
+          find / -name tfwhatsup_win-x64.tar
       - name: Clear the publish directories
         run: |
           rm -rf ${{env.RELEASE_LOCATION}}linux-x64/publish
@@ -101,13 +102,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
-          path:
-            "tfwhatsup_linux-x64.tar"
-            # "tfwhatsup_linux-x64_selfcontained.tar"
-            # "tfwhatsup_osx-x64.tar"
-            # "tfwhatsup_osx-x64_selfcontained.tar"
-            # "tfwhatsup_win-x64.tar"
-            # "tfwhatsup_win-x64_selfcontained.tar"
+          path: "tfwhatsup_linux-x64.tar"
       # - name: Create GitHub Release With Assets
       #   if: github.ref == 'refs/heads/main'
       #   uses: softprops/action-gh-release@v1
