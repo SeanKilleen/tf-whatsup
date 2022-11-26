@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: nuget-package
-          path: "**/*.nupkg"
+          path: "${{env.CODE_LOCATION}}/TFWhatsUp.Console/nupkg/*.nupkg"
       # - name: Create GitHub Release With Assets
       #   if: github.ref == 'refs/heads/main'
       #   uses: softprops/action-gh-release@v1
@@ -97,7 +97,7 @@ jobs:
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
           mkdir ${{env.CODE_LOCATION}}output
-          tar cvzf ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}.tar.gz ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish/*.*
+          tar cvz -C ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish -f ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}.tar.gz .
       - name: Clear the publish directories
         run: rm -rf ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish
       - name: Publish Self-Contained .EXEs
@@ -105,7 +105,7 @@ jobs:
         run: dotnet publish -r ${{matrix.RID}} ${{env.PUBLISH_COMMAND_FLAGS_SC}}
       - name: ZIP Self-Contained .EXEs
         working-directory: "${{env.CODE_LOCATION}}"
-        run: tar cvzf ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}_selfcontained.tar.gz ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish/*.*
+        run: tar cvz -C ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish -f ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}_selfcontained.tar.gz .
       - name: Go to Output Directory # To set up artifacts to work
         run: |
           cd ${{env.CODE_LOCATION}}output
