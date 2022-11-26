@@ -72,23 +72,32 @@ jobs:
       - name: Publish Single-File .EXE - ${{matrix.RID}}
         working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet publish -r ${{matrix.RID}} ${{env.PUBLISH_COMMAND_FLAGS}}
+      - name: ZIP Single-File .EXE - ${{matrix.RID}}
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          mkdir ${{env.CODE_LOCATION}}output
+          tar cvz -C ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish -f ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}.tar.gz .
       - name: "Save Artifact: ${{matrix.RID}}"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
           name: tfwhatsup_${{matrix.RID}}
-          path: "${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish/*.*"
+          path: "${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}.tar.gz"
       - name: Clear the publish directories
         run: rm -rf ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish
-      - name: Publish Self-Contained .EXEs - ${{matrix.RID}}
+      - name: Publish Self-Contained .EXEs - ${{matrix.RID}}_selfcontained
         working-directory: "${{env.CODE_LOCATION}}"
         run: dotnet publish -r ${{matrix.RID}} ${{env.PUBLISH_COMMAND_FLAGS_SC}}
+      - name: ZIP Single-File .EXE - ${{matrix.RID}}_selfcontained
+        working-directory: "${{env.CODE_LOCATION}}"
+        run: |
+          tar cvz -C ${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish -f ${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}_sefcontained.tar.gz .
       - name: "Save Artifact: ${{matrix.RID}}_selfcontained"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
         with:
           name: tfwhatsup_${{matrix.RID}}_selfcontained
-          path: "${{env.RELEASE_LOCATION}}${{matrix.RID}}/publish/*.*"
+          path: "${{env.CODE_LOCATION}}output/tfwhatsup_${{matrix.RID}}_sefcontained.tar.gz"
   create_release:
     needs: [build, publish_artifacts]
     runs-on: ubuntu-latest
@@ -102,8 +111,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
       - name: See download contents
-        run:
-          ls -R
+        run: ls -R
           # - name: Create GitHub Release With Assets
         #   if: github.ref == 'refs/heads/main'
         #   uses: softprops/action-gh-release@v1
