@@ -62,9 +62,9 @@ jobs:
         working-directory: "${{env.CODE_LOCATION}}"
         run: |
           mkdir ${{env.CODE_LOCATION}}output
-          tar -cvfz ${{env.CODE_LOCATION}}output/tfwhatsup_linux-x64.tar.gz ${{env.gz.RELEASE_LOCATION}}linux-x64/publish/
+          tar -cvfz ${{env.CODE_LOCATION}}output/tfwhatsup_linux-x64.tar.gz ${{env.RELEASE_LOCATION}}linux-x64/publish/
           tar -cvfz ${{env.CODE_LOCATION}}output/tfwhatsup_osx-x64.tar.gz ${{env.RELEASE_LOCATION}}osx-x64/publish/
-          tar -cvfz ${{env.CODE_LOCATION}}output/tfwhatsup_win-x64.tar ${{env.RELEASE_LOCATION}}win-x64/publish/
+          tar -cvfz ${{env.CODE_LOCATION}}output/tfwhatsup_win-x64.tar.gz ${{env.RELEASE_LOCATION}}win-x64/publish/
           pwd
           ls ./*.*
           find / -name tfwhatsup_win-x64.tar
@@ -97,7 +97,9 @@ jobs:
           name: nuget-package
           path: "**/*.nupkg"
       - name: Go to Output Directory # To set up artifacts to work
-        run: cd ${{env.CODE_LOCATION}}output
+        run: |
+          cd ${{env.CODE_LOCATION}}output
+          pwd
       - name: "Save Artifact: Tar files"
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
