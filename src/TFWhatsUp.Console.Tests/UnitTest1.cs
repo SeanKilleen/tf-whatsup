@@ -2,10 +2,10 @@ using FluentAssertions;
 
 namespace TFWhatsUp.Console.Tests;
 
-public class UnitTest1
+public class HashicorpApiVerificationTests
 {
     [Fact]
-    public void BasicTest_AdditionWorks()
+    public void VerifyAzure()
     {
         (1 + 1).Should().Be(2);
     }
