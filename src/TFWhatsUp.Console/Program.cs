@@ -9,6 +9,7 @@ using Spectre.Console.Cli;
 using Sprache;
 using System.Net.Http.Json;
 using System.Text.Json;
+using TFWhatsUp.Console;
 
 var app = new CommandApp<WhatsUpCommand>();
 return app.Run(args);
@@ -60,6 +61,9 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         public bool? AllCaps { get; set; }
     }
 
+    readonly OutputHelper _output = new ();
+    private readonly TerraformRegistryService _tfRegistry = new();
+
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         var StartDirectory = settings.TerraformFilesPath ?? Directory.GetCurrentDirectory();
@@ -71,7 +75,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var lockfileLocation = Path.Combine(StartDirectory, ".terraform.lock.hcl");
         if (!Path.Exists(lockfileLocation))
         {
-            WriteError($"Lock file not found at {lockfileLocation}");
+            _output.WriteError($"Lock file not found at {lockfileLocation}");
             return ExitCodes.LOCKFILE_NOT_FOUND;
         }
         string lockfileContents = await File.ReadAllTextAsync(lockfileLocation);
@@ -79,7 +83,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         var allTerraformFiles = Directory.GetFiles(StartDirectory, "*.tf", SearchOption.AllDirectories);
         if (!allTerraformFiles.Any())
         {
-            WriteError($"Exiting: No Terraform files found in '{StartDirectory}'");
+            _output.WriteError($"Exiting: No Terraform files found in '{StartDirectory}'");
             return ExitCodes.TERRAFORM_FILES_NOT_FOUND;
         }
 
@@ -105,7 +109,7 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             .Spinner(Spinner.Known.Earth)
             .StartAsync("Determining GitHub URLs...", async ctx =>
             {
-                providersWithGitHubInfo = await GetGithubUrlsForProviders(providerInfoList);
+                providersWithGitHubInfo = await _tfRegistry.GetGithubUrlsForProviders(providerInfoList);
             });
 
         var ghUrlTable = GenerateGitHubUrlTable(providersWithGitHubInfo);
@@ -157,23 +161,13 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
             }
             catch (Exception ex)
             {
-                WriteError($"Encountered an issue processing ${filePath}");
+                _output.WriteError($"Encountered an issue processing ${filePath}");
                 AnsiConsole.WriteException(ex);
                 continue;
             }
         }
 
         return allNames.Distinct().ToList();
-    }
-
-    private void WriteWarning(string message)
-    {
-        AnsiConsole.MarkupLine($"[bold yellow]WARNING:[/] {message}");
-    }
-
-    private void WriteError(string message)
-    {
-        AnsiConsole.MarkupLine($"[bold red]ERROR[/]: {message}");
     }
 
     private Table GenerateTFFilesTable(string[] allTerraformFiles)
@@ -269,44 +263,6 @@ internal sealed class WhatsUpCommand : AsyncCommand<WhatsUpCommand.Settings>
         return ghUrlTable;
     }
 
-    private async Task<List<ProviderInfo>> GetGithubUrlsForProviders(List<ProviderInfo> providerInfoList)
-    {
-        List<ProviderInfo> providersWithGitHubInfo = new();
-        using var httpClient = new HttpClient();
-        foreach (var provider in providerInfoList)
-        {
-            var url = $"https://registry.terraform.io/v1/providers/{provider.Vendor}/{provider.Name}";
-            try
-            {
-                var result = await httpClient.GetFromJsonAsync<TerraformProviderResponse>(url);
-                if (result is not null)
-                {
-                    var pathItems = new Uri(result.Source, UriKind.Absolute).AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-                    providersWithGitHubInfo.Add(provider with { GitHubOrg = pathItems[0], GitHubRepo = pathItems[1] });
-                }
-                else
-                {
-                    WriteWarning($"Terraform registry response was null for provider '{provider.Vendor}/{provider.Name}'");
-                }
-            }
-            catch (HttpRequestException ex) // Non success
-            {
-                WriteError($"HTTP error when querying Terraform registry for provider '{provider.Vendor}/{provider.Name}'");
-                AnsiConsole.WriteException(ex);
-            }
-            catch (NotSupportedException ex) // When content type is not valid
-            {
-                WriteError($"HTTP error when querying Terraform registry for provider '{provider.Vendor}/{provider.Name}'");
-                AnsiConsole.WriteException(ex);
-            }
-            catch (JsonException ex) // Invalid JSON
-            {
-                WriteError($"Invalid JSON Response when querying Terraform registry for provider '{provider.Vendor}/{provider.Name}'");
-                AnsiConsole.WriteException(ex);
-            }
-        }
-        return providersWithGitHubInfo;
-    }
 
     private Table GenerateResourceTypesTable(List<string> totalTypes)
     {

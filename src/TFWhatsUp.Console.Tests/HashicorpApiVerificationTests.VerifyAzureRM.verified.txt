@@ -1,0 +1,8 @@
+﻿{
+  Vendor: hashicorp,
+  Name: azurerm,
+  UrlToLatest: ,
+  Version: ,
+  GitHubOrg: hashicorp,
+  GitHubRepo: terraform-provider-azurerm
+}
