@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFWhatsUp.Console", "TFWhatsUp.Console\TFWhatsUp.Console.csproj", "{9D5EDEE2-B0C9-45A3-8EF4-43160BD9421E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFWhatsUp.Console.Tests", "TFWhatsUp.Console.Tests\TFWhatsUp.Console.Tests.csproj", "{69EC8509-DF9B-441A-8C65-516B5E9C1957}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{9D5EDEE2-B0C9-45A3-8EF4-43160BD9421E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D5EDEE2-B0C9-45A3-8EF4-43160BD9421E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D5EDEE2-B0C9-45A3-8EF4-43160BD9421E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69EC8509-DF9B-441A-8C65-516B5E9C1957}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69EC8509-DF9B-441A-8C65-516B5E9C1957}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69EC8509-DF9B-441A-8C65-516B5E9C1957}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69EC8509-DF9B-441A-8C65-516B5E9C1957}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
