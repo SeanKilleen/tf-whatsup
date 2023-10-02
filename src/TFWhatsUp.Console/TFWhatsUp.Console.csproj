@@ -27,7 +27,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Octokit" Version="6.2.1" />
+    <PackageReference Include="Octokit" Version="8.0.1" />
     <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.1.599" />
     <PackageReference Include="Semver" Version="2.3.0" />
     <PackageReference Include="Spectre.Console" Version="0.47.0" />
